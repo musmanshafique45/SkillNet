@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Manage Course – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <!-- LIST VIEW -->
+      <div id="listView">
+        <div class="dash-page-header">
+          <div><h1>My Courses</h1><p>Manage your published and draft courses</p></div>
+          <a href="create-course.html" class="btn btn-primary">➕ Create Course</a>
+        </div>
+        <div id="allCoursesList" style="display:grid;grid-template-columns:1fr;gap:16px"></div>
+      </div>
+
+      <!-- DETAIL VIEW -->
+      <div id="detailView" class="hidden">
+        <div class="dash-page-header" style="align-items:center">
+          <div>
+            <button onclick="showList()" class="btn btn-ghost btn-sm mb-4">← Back to List</button>
+            <div style="display:flex;align-items:center;gap:12px">
+              <h1 id="cTitle">Course Title</h1>
+              <span id="cStatus"></span>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <button id="togglePublishBtn" class="btn btn-primary" onclick="togglePublish()">Publish Course</button>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:32px">
+          <div class="card" style="padding:24px">
+            <div class="dash-stat-info">
+              <div class="label">Total Students</div>
+              <div class="value" id="cStudents">0</div>
+            </div>
+          </div>
+          <div class="card" style="padding:24px">
+            <div class="dash-stat-info">
+              <div class="label">Course Revenue</div>
+              <div class="value" id="cRev">$0</div>
+            </div>
+          </div>
+          <div class="card" style="padding:24px">
+            <div class="dash-stat-info">
+              <div class="label">Rating</div>
+              <div class="value" id="cRating">0.0</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid var(--border-light);padding-bottom:16px">
+          <h3>Curriculum</h3>
+          <div style="display:flex;gap:12px">
+            <button onclick="window.location.href='upload-lecture.html?course='+currentCourseId" class="btn btn-outline btn-sm">➕ Add Lecture</button>
+            <button onclick="window.location.href='quiz-builder.html?course='+currentCourseId" class="btn btn-outline btn-sm">➕ Add Quiz</button>
+          </div>
+        </div>
+
+        <div id="curriculumList"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['teacher']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('teacher','manage');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('Manage Course');
+
+  const myCourses = DB.where('courses', 'teacher_id', session.userId);
+  let currentCourseId = new URLSearchParams(window.location.search).get('id');
+
+  function renderList() {
+    const listEl = document.getElementById('allCoursesList');
+    if (myCourses.length === 0) {
+      listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🎬</div><h3>No courses yet</h3><p>Create your first course.</p></div>`;
+      return;
+    }
+    listEl.innerHTML = myCourses.map(c => `
+      <div class="teacher-course-row" style="padding:20px">
+        <img src="${c.thumbnail}" class="teacher-course-thumb" style="width:120px;height:80px" onerror="this.style.background='var(--primary)'">
+        <div class="teacher-course-info">
+          <h4 style="margin-bottom:4px">${c.title}</h4>
+          <div style="font-size:.8rem;color:var(--text-secondary);display:flex;gap:16px">
+            <span>${statusBadge(c.status)}</span>
+            <span>💰 ${formatPrice(c.price)}</span>
+            <span>👥 ${c.students} students</span>
+            <span>⭐ ${c.rating} rating</span>
+          </div>
+        </div>
+        <div>
+          <button onclick="showDetail('${c.id}')" class="btn btn-primary">Edit / Manage</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function showList() {
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('listView').classList.remove('hidden');
+    window.history.replaceState({}, '', 'manage-course.html');
+  }
+
+  function showDetail(id) {
+    currentCourseId = id;
+    const course = DB.getById('courses', id);
+    if (!course) { showList(); return; }
+
+    window.history.replaceState({}, '', `manage-course.html?id=${id}`);
+    document.getElementById('listView').classList.add('hidden');
+    document.getElementById('detailView').classList.remove('hidden');
+
+    document.getElementById('cTitle').textContent = course.title;
+    document.getElementById('cStatus').innerHTML = statusBadge(course.status);
+    document.getElementById('cStudents').textContent = course.students;
+    document.getElementById('cRev').textContent = '$' + (course.students * course.price).toLocaleString();
+    document.getElementById('cRating').textContent = course.rating || 'New';
+
+    const pubBtn = document.getElementById('togglePublishBtn');
+    if (course.status === 'published') {
+      pubBtn.textContent = 'Unpublish Course';
+      pubBtn.classList.replace('btn-primary', 'btn-danger');
+    } else {
+      pubBtn.textContent = 'Publish Course';
+      pubBtn.classList.replace('btn-danger', 'btn-primary');
+    }
+
+    renderCurriculum(id);
+  }
+
+  function renderCurriculum(courseId) {
+    const lectures = DB.where('lectures','course_id', courseId).sort((a,b)=>a.order_index-b.order_index);
+    const quizzes = DB.where('quizzes','course_id', courseId);
+    
+    let html = '';
+    
+    if(lectures.length === 0 && quizzes.length === 0) {
+      html = `<div class="empty-state" style="padding:40px"><div class="empty-icon">📂</div><h3>Curriculum is empty</h3><p>Add lectures and quizzes to build your course.</p></div>`;
+    } else {
+      html += lectures.map(l => `
+        <div style="display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius);padding:16px 20px;margin-bottom:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;margin-right:16px;font-size:.8rem;font-weight:700">${l.order_index}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.95rem">${l.title}</div>
+            <div style="font-size:.8rem;color:var(--text-secondary)">▶ Video · ${l.duration}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="delLecture('${l.id}')" title="Delete">🗑️</button>
+          </div>
+        </div>`).join('');
+        
+      html += quizzes.map(q => `
+        <div style="display:flex;align-items:center;background:rgba(245,158,11,.05);border:1px dashed var(--amber);border-radius:var(--radius);padding:16px 20px;margin-top:16px;margin-bottom:8px">
+          <div style="margin-right:16px;font-size:1.4rem">📝</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.95rem;color:var(--amber)">${q.title}</div>
+            <div style="font-size:.8rem;color:var(--text-secondary)">Quiz · ${q.time_limit} mins</div>
+          </div>
+        </div>`).join('');
+    }
+    
+    document.getElementById('curriculumList').innerHTML = html;
+  }
+
+  window.delLecture = function(id) {
+    if(confirm('Delete this lecture?')) {
+      DB.delete('lectures', id);
+      showToast('Lecture deleted', 'success');
+      renderCurriculum(currentCourseId);
+    }
+  }
+
+  window.togglePublish = function() {
+    const c = DB.getById('courses', currentCourseId);
+    const newStatus = c.status === 'published' ? 'draft' : 'published';
+    DB.update('courses', currentCourseId, { status: newStatus });
+    
+    const idx = myCourses.findIndex(x=>x.id===currentCourseId);
+    if(idx>-1) myCourses[idx].status = newStatus;
+    
+    showToast(`Course ${newStatus}!`, 'success');
+    showDetail(currentCourseId);
+  }
+
+  if (currentCourseId) showDetail(currentCourseId);
+  else renderList();
+</script>
+</body>
+</html>

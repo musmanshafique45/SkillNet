@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Quiz – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body style="background:var(--bg-secondary)">
+<div class="topbar">
+  <div class="topbar-left">
+    <button onclick="window.history.back()" class="btn btn-ghost btn-sm">← Back</button>
+  </div>
+</div>
+
+<div class="container section">
+  <div class="quiz-container">
+    <div id="startScreen" class="card" style="padding:40px;text-align:center;max-width:500px;margin:0 auto">
+      <div style="font-size:3rem;margin-bottom:16px">📝</div>
+      <h2 id="qzTitle" style="margin-bottom:12px">Loading...</h2>
+      <p id="qzCourse" style="color:var(--text-secondary);margin-bottom:24px"></p>
+      <div style="display:flex;justify-content:center;gap:24px;margin-bottom:32px">
+        <div><div style="font-weight:700" id="qzQCount">0</div><div style="font-size:.8rem;color:var(--text-muted)">Questions</div></div>
+        <div><div style="font-weight:700" id="qzTime">0m</div><div style="font-size:.8rem;color:var(--text-muted)">Time Limit</div></div>
+        <div><div style="font-weight:700" id="qzPass">80%</div><div style="font-size:.8rem;color:var(--text-muted)">To Pass</div></div>
+      </div>
+      <button class="btn btn-primary btn-lg w-full" onclick="startQuiz()">Start Quiz Now</button>
+    </div>
+
+    <div id="quizScreen" class="hidden">
+      <div class="quiz-header-bar">
+        <div>
+          <h3 id="runningTitle">Quiz Title</h3>
+          <div style="font-size:.85rem;color:var(--text-secondary)">Question <span id="qCurr">1</span> of <span id="qTot">10</span></div>
+        </div>
+        <div class="quiz-timer" id="timer">00:00</div>
+      </div>
+
+      <div id="questionsContainer"></div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:24px">
+        <button class="btn btn-outline" id="prevBtn" onclick="navQ(-1)" style="visibility:hidden">← Previous</button>
+        <button class="btn btn-primary" id="nextBtn" onclick="navQ(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['student']);
+  const quizId = new URLSearchParams(window.location.search).get('quiz');
+  if (!quizId) window.location.href = 'dashboard.html';
+
+  const quiz = quizId ? DB.getById('quizzes', quizId) : null;
+  if (!quiz) { showToast('Quiz not found.', 'error'); setTimeout(()=>window.location.href='dashboard.html',1000); }
+
+  const course = quiz ? DB.getById('courses', quiz.course_id) : null;
+  const questions = quiz ? DB.where('questions', 'quiz_id', quizId) : [];
+
+  if (quiz && questions.length === 0) { alert('This quiz has no questions yet.'); window.location.href = 'dashboard.html'; }
+
+  // Start Screen Init
+  document.getElementById('qzTitle').textContent = quiz.title;
+  document.getElementById('qzCourse').textContent = course.title;
+  document.getElementById('qzQCount').textContent = questions.length;
+  document.getElementById('qzTime').textContent = quiz.time_limit + 'm';
+  document.getElementById('runningTitle').textContent = quiz.title;
+  document.getElementById('qTot').textContent = questions.length;
+
+  let currIndex = 0;
+  let userAnswers = {};
+  let timeLeft = quiz.time_limit * 60;
+  let timerInterval = null;
+
+  function startQuiz() {
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('quizScreen').classList.remove('hidden');
+    renderQuestion();
+    
+    // Timer
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        submitQuiz();
+      } else {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        const tEl = document.getElementById('timer');
+        tEl.textContent = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+        if (timeLeft < 60) tEl.classList.add('danger');
+      }
+    }, 1000);
+  }
+
+  function renderQuestion() {
+    const q = questions[currIndex];
+    document.getElementById('qCurr').textContent = currIndex + 1;
+    
+    const letters = ['A','B','C','D','E'];
+    const opts = q.options.map((opt, i) => {
+      const isSel = userAnswers[q.id] === i;
+      return `
+      <div class="option-item ${isSel?'selected':''}" onclick="selectOption('${q.id}', ${i})">
+        <div class="option-letter">${letters[i]}</div>
+        <div>${opt}</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('questionsContainer').innerHTML = `
+      <div class="question-card">
+        <div class="question-num">Question ${currIndex + 1}</div>
+        <div class="question-text">${q.question_text}</div>
+        <div class="option-list">${opts}</div>
+      </div>
+    `;
+
+    document.getElementById('prevBtn').style.visibility = currIndex > 0 ? 'visible' : 'hidden';
+    
+    const nextBtn = document.getElementById('nextBtn');
+    if (currIndex === questions.length - 1) {
+      nextBtn.textContent = 'Submit Quiz ✓';
+      nextBtn.classList.replace('btn-primary', 'btn-accent');
+    } else {
+      nextBtn.textContent = 'Next →';
+      nextBtn.classList.replace('btn-accent', 'btn-primary');
+    }
+  }
+
+  window.selectOption = function(qId, index) {
+    userAnswers[qId] = index;
+    renderQuestion();
+  }
+
+  window.navQ = function(dir) {
+    if (dir === 1 && currIndex === questions.length - 1) {
+      submitQuiz();
+      return;
+    }
+    currIndex += dir;
+    renderQuestion();
+  }
+
+  function submitQuiz() {
+    clearInterval(timerInterval);
+    
+    let correct = 0;
+    questions.forEach(q => {
+      if (userAnswers[q.id] === q.correct_answer) correct++;
+    });
+    
+    const score = Math.round((correct / questions.length) * 100);
+    const passed = score >= 80;
+
+    const attempt = {
+      id: generateId('a'),
+      student_id: session.userId,
+      quiz_id: quiz.id,
+      score: score,
+      answers: userAnswers,
+      submitted_at: new Date().toISOString(),
+      passed: passed
+    };
+    
+    DB.insert('quiz_attempts', attempt);
+    
+    // Save to localStorage temporarily to pass to results page
+    localStorage.setItem('last_quiz_attempt', JSON.stringify(attempt));
+    window.location.href = 'results.html';
+  }
+</script>
+</body>
+</html>

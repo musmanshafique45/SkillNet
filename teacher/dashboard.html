@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Teacher Dashboard – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1 id="welcomeMsg">Welcome, Instructor 👋</h1><p>Here's an overview of your courses and students</p></div>
+        <a href="create-course.html" class="btn btn-primary">➕ Create New Course</a>
+      </div>
+
+      <div class="dash-stats" id="statsRow"></div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:32px">
+        <!-- MY COURSES -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h4>My Courses</h4>
+            <a href="manage-course.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div id="coursesList"></div>
+        </div>
+
+        <!-- RECENT STUDENTS -->
+        <div class="chart-container">
+          <div class="chart-header"><h4>Recent Enrollments</h4></div>
+          <div class="activity-feed" id="studentsList"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['teacher']);
+  if (session) {
+    document.getElementById('sidebarContainer').innerHTML = renderSidebar('teacher','dashboard');
+    document.getElementById('topbarContainer').innerHTML = renderTopbar('Instructor Dashboard');
+    document.getElementById('welcomeMsg').textContent = 'Welcome, ' + session.name.split(' ')[0] + ' 👋';
+
+    const myCourses = DB.where('courses', 'teacher_id', session.userId);
+    const totalStudents = myCourses.reduce((sum, c) => sum + (c.students || 0), 0);
+    const published = myCourses.filter(c => c.status === 'published').length;
+    const avgRating = myCourses.length ? (myCourses.reduce((sum, c) => sum + (c.rating||0), 0) / myCourses.length).toFixed(1) : '0.0';
+    
+    let earnings = 0;
+    myCourses.forEach(c => earnings += (c.price * c.students));
+
+    // STATS
+    document.getElementById('statsRow').innerHTML = `
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-indigo">👥</div>
+        <div class="dash-stat-info">
+          <div class="label">Total Students</div>
+          <div class="value">${totalStudents.toLocaleString()}</div>
+          <div class="change">↑ +12 this week</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-green">💰</div>
+        <div class="dash-stat-info">
+          <div class="label">Total Revenue</div>
+          <div class="value">$${earnings.toLocaleString()}</div>
+          <div class="change">💵 Estimations</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-amber">⭐</div>
+        <div class="dash-stat-info">
+          <div class="label">Course Rating</div>
+          <div class="value">${avgRating}</div>
+          <div class="change">↑ Excellent</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-purple">📚</div>
+        <div class="dash-stat-info">
+          <div class="label">Published Courses</div>
+          <div class="value">${published}</div>
+          <div class="change">${myCourses.length - published} pending/draft</div>
+        </div>
+      </div>`;
+
+    // COURSES LIST
+    const cList = document.getElementById('coursesList');
+    if (myCourses.length === 0) {
+      cList.innerHTML = `<div class="empty-state"><div class="empty-icon">🎬</div><h3>No courses yet</h3><p>Create your first course and start earning.</p></div>`;
+    } else {
+      cList.innerHTML = myCourses.slice(0, 5).map(c => `
+      <div class="teacher-course-row">
+        <img src="${c.thumbnail}" class="teacher-course-thumb" onerror="this.style.background='var(--primary)'">
+        <div class="teacher-course-info">
+          <h5>${c.title}</h5>
+          <p>${statusBadge(c.status)} · ${formatPrice(c.price)}</p>
+        </div>
+        <div class="teacher-course-stats">
+          <div class="teacher-course-stat"><div class="num">${c.students.toLocaleString()}</div><div class="lbl">Students</div></div>
+          <div class="teacher-course-stat"><div class="num">★${c.rating}</div><div class="lbl">Rating</div></div>
+          <a href="manage-course.html?id=${c.id}" class="btn btn-outline btn-sm">Manage</a>
+        </div>
+      </div>`).join('');
+    }
+
+    // STUDENTS MOCK
+    const stds = [
+      { name: 'Alex Johnson', time: '2 hours ago', course: myCourses[0]?.title || 'Course' },
+      { name: 'Maria Garcia', time: '5 hours ago', course: myCourses[0]?.title || 'Course' },
+      { name: 'James Smith', time: '1 day ago', course: myCourses[1]?.title || 'Course' },
+      { name: 'Emma Wilson', time: '2 days ago', course: myCourses[1]?.title || 'Course' },
+    ];
+    document.getElementById('studentsList').innerHTML = stds.map(s => `
+      <div class="activity-item">
+        <div class="activity-icon icon-green">👤</div>
+        <div class="activity-text"><p><strong>${s.name}</strong> enrolled in <br><span style="font-size:.78rem">${truncate(s.course,40)}</span></p></div>
+        <div class="activity-time">${s.time}</div>
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>

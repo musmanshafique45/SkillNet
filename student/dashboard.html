@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Student Dashboard – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <!-- PAGE HEADER -->
+      <div class="dash-page-header">
+        <div><h1 id="welcomeMsg">Welcome back! 👋</h1><p>Track your progress and continue learning</p></div>
+        <a href="../courses.html" class="btn btn-primary">🔍 Browse Courses</a>
+      </div>
+
+      <!-- STATS -->
+      <div class="dash-stats" id="statsRow"></div>
+
+      <!-- ENROLLED COURSES -->
+      <div style="margin-bottom:32px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <h3>My Courses</h3>
+          <a href="../courses.html" class="btn btn-ghost btn-sm">Browse More →</a>
+        </div>
+        <div id="enrolledGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px"></div>
+      </div>
+
+      <!-- BOTTOM GRID -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <!-- UPCOMING QUIZZES -->
+        <div class="chart-container">
+          <div class="chart-header"><h4>📝 Available Quizzes</h4></div>
+          <div id="quizList"></div>
+        </div>
+        <!-- RECENT ACTIVITY -->
+        <div class="chart-container">
+          <div class="chart-header"><h4>⚡ Recent Activity</h4></div>
+          <div class="activity-feed" id="activityFeed"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['student']);
+  if (session) {
+    document.getElementById('sidebarContainer').innerHTML = renderSidebar('student','dashboard');
+    document.getElementById('topbarContainer').innerHTML = renderTopbar('Dashboard');
+    document.getElementById('welcomeMsg').textContent = 'Welcome back, ' + session.name.split(' ')[0] + '! 👋';
+
+    const user = DB.getById('users', session.userId);
+    const enrollments = DB.where('enrollments','student_id', session.userId);
+    const completed = enrollments.filter(e => e.progress === 100);
+    const attempts = DB.where('quiz_attempts','student_id', session.userId);
+
+    // STATS
+    document.getElementById('statsRow').innerHTML = `
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-indigo">📚</div>
+        <div class="dash-stat-info">
+          <div class="label">Enrolled Courses</div>
+          <div class="value">${enrollments.length}</div>
+          <div class="change">↑ Active learner</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-green">✅</div>
+        <div class="dash-stat-info">
+          <div class="label">Completed</div>
+          <div class="value">${completed.length}</div>
+          <div class="change">🏆 Keep going!</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-amber">📝</div>
+        <div class="dash-stat-info">
+          <div class="label">Quizzes Taken</div>
+          <div class="value">${attempts.length}</div>
+          <div class="change">💯 Great effort</div>
+        </div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon icon-purple">⭐</div>
+        <div class="dash-stat-info">
+          <div class="label">Avg Progress</div>
+          <div class="value">${enrollments.length ? Math.round(enrollments.reduce((s,e)=>s+e.progress,0)/enrollments.length) : 0}%</div>
+          <div class="change">📈 Keep it up!</div>
+        </div>
+      </div>`;
+
+    // ENROLLED COURSES
+    const grid = document.getElementById('enrolledGrid');
+    if (enrollments.length === 0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📚</div><h3>No courses yet</h3><p>Start your learning journey today!</p><a href="../courses.html" class="btn btn-primary">Browse Courses</a></div>`;
+    } else {
+      grid.innerHTML = enrollments.map(e => {
+        const course = DB.getById('courses', e.course_id);
+        if (!course) return '';
+        const teacher = DB.getById('users', course.teacher_id);
+        return `
+        <div class="enrolled-course-card">
+          <div class="enrolled-course-thumb">
+            <img src="${course.thumbnail}" alt="${course.title}" onerror="this.style.background='var(--primary)'">
+            <div class="thumb-overlay"></div>
+          </div>
+          <div class="enrolled-course-body">
+            <h4>${course.title}</h4>
+            <div class="instructor">${teacher?.name || 'Instructor'}</div>
+            <div class="enrolled-progress-label">
+              <span>Progress</span><span>${e.progress}%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill ${e.progress===100?'accent':''}" style="width:${e.progress}%"></div></div>
+          </div>
+          <div class="enrolled-course-footer">
+            ${e.progress===100
+              ? `<a href="../student/profile.html" class="btn btn-accent btn-sm">🏆 Certificate</a>`
+              : `<a href="player.html?course=${e.course_id}" class="btn btn-primary btn-sm">▶ Continue</a>`}
+            <span class="badge badge-${e.progress===100?'accent':'primary'}">${e.progress===100?'Complete':e.progress+'%'}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // QUIZ LIST
+    const enrolledCourseIds = enrollments.map(e => e.course_id);
+    const availableQuizzes = DB.getAll('quizzes').filter(q => enrolledCourseIds.includes(q.course_id));
+    const quizListEl = document.getElementById('quizList');
+    if (availableQuizzes.length === 0) {
+      quizListEl.innerHTML = '<p style="color:var(--text-secondary);font-size:.88rem;text-align:center;padding:20px">Enroll in courses to unlock quizzes</p>';
+    } else {
+      quizListEl.innerHTML = availableQuizzes.map(q => {
+        const taken = attempts.find(a => a.quiz_id === q.id);
+        return `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)">
+          <div style="width:40px;height:40px;background:rgba(99,102,241,.1);border-radius:10px;display:flex;align-items:center;justify-content:center">📝</div>
+          <div style="flex:1">
+            <div style="font-size:.88rem;font-weight:600">${q.title}</div>
+            <div style="font-size:.75rem;color:var(--text-secondary)">⏱ ${q.time_limit} min · ${q.max_attempts} attempts</div>
+          </div>
+          ${taken
+            ? `<span class="badge badge-accent">✓ ${taken.score}%</span>`
+            : `<a href="quiz.html?quiz=${q.id}" class="btn btn-primary btn-sm">Start</a>`}
+        </div>`;
+      }).join('');
+    }
+
+    // ACTIVITY
+    const activities = [
+      { icon:'📚', type:'icon-indigo', text:`Enrolled in <strong>Web Development Bootcamp</strong>`, time:'2 days ago' },
+      { icon:'▶', type:'icon-green', text:`Watched lecture <strong>CSS Flexbox & Grid</strong>`, time:'1 day ago' },
+      { icon:'📝', type:'icon-amber', text:`Completed quiz <strong>UX Design Principles</strong> with 100%`, time:'12h ago' },
+      { icon:'🏆', type:'icon-purple', text:`Earned certificate for <strong>UI/UX Design Mastery</strong>`, time:'12h ago' },
+    ];
+    document.getElementById('activityFeed').innerHTML = activities.map(a => `
+      <div class="activity-item">
+        <div class="activity-icon ${a.type}">${a.icon}</div>
+        <div class="activity-text"><p>${a.text}</p></div>
+        <div class="activity-time">${a.time}</div>
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>

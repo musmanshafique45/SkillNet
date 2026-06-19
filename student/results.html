@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Quiz Results – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+<style>
+.res-card{background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px}
+.res-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.res-opt{padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:12px;font-size:.9rem}
+.res-opt.correct{background:rgba(16,185,129,.1);border-color:var(--accent)}
+.res-opt.wrong{background:rgba(239,68,68,.1);border-color:var(--danger)}
+</style>
+</head>
+<body style="background:var(--bg-secondary)">
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="dashboard.html" class="btn btn-ghost btn-sm">← Back to Dashboard</a>
+  </div>
+</div>
+
+<div class="container section-sm" style="max-width:800px">
+  <div class="results-hero">
+    <div class="results-score-ring" id="scoreRing">
+      <span id="scoreText">0%</span>
+    </div>
+    <h2 id="resTitle" style="margin-bottom:8px">Quiz Completed</h2>
+    <p id="resMsg" style="color:var(--text-secondary);margin-bottom:24px">You passed! Great job.</p>
+    <div style="display:flex;gap:16px;justify-content:center">
+      <a href="dashboard.html" class="btn btn-primary">Return to Dashboard</a>
+      <button class="btn btn-outline" id="retakeBtn">Retake Quiz</button>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:20px">Detailed Breakdown</h3>
+  <div id="breakdownContainer"></div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['student']);
+  const rawData = localStorage.getItem('last_quiz_attempt');
+  
+  if (!rawData) window.location.href = 'dashboard.html';
+  
+  const attempt = JSON.parse(rawData);
+  const quiz = DB.getById('quizzes', attempt.quiz_id);
+  const questions = DB.where('questions', 'quiz_id', attempt.quiz_id);
+
+  // Update ring
+  const ring = document.getElementById('scoreRing');
+  ring.style.setProperty('--score-deg', `${(attempt.score / 100) * 360}deg`);
+  document.getElementById('scoreText').textContent = attempt.score + '%';
+
+  const title = document.getElementById('resTitle');
+  const msg = document.getElementById('resMsg');
+
+  if (attempt.passed) {
+    title.textContent = 'Congratulations! 🎉';
+    msg.textContent = `You passed ${quiz.title} with a score of ${attempt.score}%.`;
+    ring.style.background = `conic-gradient(var(--accent) var(--score-deg), var(--border-light) 0deg)`;
+  } else {
+    title.textContent = 'Keep Practicing 💪';
+    msg.textContent = `You scored ${attempt.score}%. You need 80% to pass.`;
+    ring.style.background = `conic-gradient(var(--danger) var(--score-deg), var(--border-light) 0deg)`;
+  }
+
+  document.getElementById('retakeBtn').onclick = () => window.location.href = `quiz.html?quiz=${quiz.id}`;
+
+  const letters = ['A','B','C','D','E'];
+  const html = questions.map((q, i) => {
+    const uAns = attempt.answers[q.id];
+    const isCorrect = uAns === q.correct_answer;
+    
+    const opts = q.options.map((opt, j) => {
+      let cls = '';
+      let icon = '';
+      if (j === q.correct_answer) { cls = 'correct'; icon = '✅'; }
+      else if (j === uAns && !isCorrect) { cls = 'wrong'; icon = '❌'; }
+      
+      return `
+      <div class="res-opt ${cls}">
+        <span style="font-weight:700;color:var(--text-secondary)">${letters[j]}</span>
+        <span>${opt}</span>
+        <span style="margin-left:auto">${icon}</span>
+      </div>`;
+    }).join('');
+
+    return `
+    <div class="res-card">
+      <div class="res-header">
+        <div style="font-weight:600">Question ${i + 1}</div>
+        <span class="badge badge-${isCorrect?'accent':'danger'}">${isCorrect?'+1 Point':'0 Points'}</span>
+      </div>
+      <div style="font-size:1.05rem;margin-bottom:16px">${q.question_text}</div>
+      ${opts}
+    </div>`;
+  }).join('');
+
+  document.getElementById('breakdownContainer').innerHTML = html;
+</script>
+</body>
+</html>

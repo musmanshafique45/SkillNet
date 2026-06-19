@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login – SkillNest</title>
+<meta name="description" content="Sign in to your SkillNest account and continue learning."/>
+<link rel="stylesheet" href="css/main.css"/>
+<style>
+.auth-page{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.auth-left{background:linear-gradient(135deg,#0A0E1A,#141A2E);padding:60px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.auth-left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 30% 30%,rgba(99,102,241,.25) 0%,transparent 70%)}
+.auth-left-content{position:relative;z-index:1}
+.auth-right{padding:60px;display:flex;align-items:center;justify-content:center;background:var(--bg-primary)}
+.auth-form-box{width:100%;max-width:440px}
+.demo-creds{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:var(--radius);padding:16px;margin-bottom:24px}
+.demo-cred-item{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-secondary);margin-bottom:6px;cursor:pointer}
+.demo-cred-item:last-child{margin-bottom:0}
+.demo-cred-item:hover{color:var(--primary)}
+.demo-cred-item .role-tag{padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;background:rgba(99,102,241,.2);color:var(--primary)}
+@media(max-width:768px){.auth-page{grid-template-columns:1fr}.auth-left{display:none}.auth-right{padding:32px 20px}}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <a href="index.html" class="navbar-logo" style="font-size:1.4rem;display:flex;gap:10px;align-items:center;text-decoration:none;margin-bottom:48px">
+        <div class="logo-icon">🎓</div>
+        <span class="brand">SkillNest</span>
+      </a>
+      <div class="hero-eyebrow" style="display:inline-flex;margin-bottom:20px"><span class="dot"></span> Trusted by 12,000+ learners</div>
+      <h1 style="font-size:2.4rem;margin-bottom:16px">Welcome back,<br><span class="gradient-text">keep learning!</span></h1>
+      <p style="font-size:1rem;max-width:360px">Your courses are waiting. Continue where you left off and keep building your skills.</p>
+
+      <div style="margin-top:48px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:rgba(99,102,241,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">📚</div>
+          <div>
+            <div style="font-weight:700;font-size:.92rem">240+ Expert Courses</div>
+            <div style="font-size:.8rem;color:var(--text-secondary)">In web dev, design, data science</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:rgba(16,185,129,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">🏆</div>
+          <div>
+            <div style="font-weight:700;font-size:.92rem">Earn Certificates</div>
+            <div style="font-size:.8rem;color:var(--text-secondary)">Verified credentials for your career</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:rgba(245,158,11,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">🎯</div>
+          <div>
+            <div style="font-weight:700;font-size:.92rem">Interactive Quizzes</div>
+            <div style="font-size:.8rem;color:var(--text-secondary)">Test your knowledge, track progress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="position:relative;z-index:1;font-size:.8rem;color:var(--text-muted)">© 2026 SkillNest. All rights reserved.</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-form-box animate-fade-up">
+      <h2 style="margin-bottom:6px">Sign In</h2>
+      <p style="color:var(--text-secondary);margin-bottom:28px">Access your personalized learning dashboard</p>
+
+      <!-- Demo credentials -->
+      <div class="demo-creds">
+        <div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:10px">🔑 Demo Accounts (click to fill)</div>
+        <div class="demo-cred-item" onclick="fillCreds('student@demo.com','password123')">
+          <span class="role-tag">Student</span> student@demo.com
+        </div>
+        <div class="demo-cred-item" onclick="fillCreds('teacher@demo.com','password123')">
+          <span class="role-tag" style="background:rgba(16,185,129,.2);color:var(--accent)">Teacher</span> teacher@demo.com
+        </div>
+        <div class="demo-cred-item" onclick="fillCreds('admin@demo.com','password123')">
+          <span class="role-tag" style="background:rgba(245,158,11,.2);color:var(--amber)">Admin</span> admin@demo.com
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-group">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="loginEmail" class="form-control" placeholder="you@example.com" required autocomplete="email"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;justify-content:space-between">
+            Password <a href="#" style="color:var(--primary);font-size:.8rem">Forgot password?</a>
+          </label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password"/>
+            <span class="input-suffix" onclick="togglePass(this)">👁</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px">
+          <input type="checkbox" id="rememberMe" style="accent-color:var(--primary);width:16px;height:16px">
+          <label for="rememberMe" style="font-size:.85rem;color:var(--text-secondary);cursor:pointer">Remember me for 30 days</label>
+        </div>
+        <div id="loginError" class="form-error" style="margin-bottom:16px;display:none"></div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" id="loginBtn">
+          Sign In →
+        </button>
+      </form>
+
+      <div class="divider"></div>
+      <p style="text-align:center;font-size:.88rem;color:var(--text-secondary)">
+        New to SkillNest? <a href="register.html" style="color:var(--primary);font-weight:600">Create free account</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  DB.init();
+  Auth.redirectIfLoggedIn();
+
+  function fillCreds(email, pass) {
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPassword').value = pass;
+  }
+
+  function togglePass(icon) {
+    const input = icon.previousElementSibling;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.textContent = input.type === 'password' ? '👁' : '🙈';
+  }
+
+  function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+    const email = document.getElementById('loginEmail').value;
+    const pass  = document.getElementById('loginPassword').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    errEl.style.display = 'none';
+
+    setTimeout(() => {
+      const result = Auth.login(email, pass);
+      if (result.success) {
+        showToast('Welcome back, ' + result.user.name + '! 👋', 'success', 2000);
+        setTimeout(() => {
+          const dest = result.session.role === 'admin' ? 'admin/dashboard.html' :
+                       result.session.role === 'teacher' ? 'teacher/dashboard.html' : 'student/dashboard.html';
+          window.location.href = dest;
+        }, 800);
+      } else {
+        errEl.textContent = result.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign In →';
+      }
+    }, 600);
+  }
+</script>
+</body>
+</html>

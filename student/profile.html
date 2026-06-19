@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Profile &amp; Certificates – SkillNest</title>
+  <meta name="description" content="Manage your account, upload avatar, and view your completion certificates." />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <!-- html2canvas for certificate download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* ---- Avatar Upload ---- */
+    .avatar-wrapper {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .avatar-wrapper img,
+    .avatar-wrapper .avatar-initials {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), #A855F7);
+      border: 3px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .avatar-wrapper:hover .avatar-overlay {
+      opacity: 1;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      font-size: .7rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .avatar-overlay span {
+      font-size: 1.3rem;
+    }
+
+    #avatarFileInput {
+      display: none;
+    }
+
+    /* ---- Certificate Modal ---- */
+    .cert-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .cert-modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .cert-modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      width: 100%;
+      max-width: 760px;
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      max-height: 92vh;
+    }
+
+    .cert-modal-overlay.open .cert-modal-box {
+      transform: scale(1);
+    }
+
+    /* ---- Certificate Card (the actual certificate design) ---- */
+    .certificate-printable {
+      background: linear-gradient(145deg, #0D1330, #131B40);
+      border: 3px solid transparent;
+      background-clip: padding-box;
+      position: relative;
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      color: #F1F5F9;
+    }
+
+    .certificate-printable {
+      background: linear-gradient(145deg, #0D1330, #131B40);
+      border: 3px solid #F59E0B;
+      background-clip: padding-box;
+      position: relative;
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      color: #F1F5F9;
+    }
+
+    .cert-bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+    }
+
+    .cert-bg-orb-1 {
+      width: 280px;
+      height: 280px;
+      background: rgba(99, 102, 241, .12);
+      top: -80px;
+      right: -80px;
+    }
+
+    .cert-bg-orb-2 {
+      width: 200px;
+      height: 200px;
+      background: rgba(16, 185, 129, .08);
+      bottom: -40px;
+      left: -40px;
+    }
+
+    .cert-bg-orb-3 {
+      width: 160px;
+      height: 160px;
+      background: rgba(245, 158, 11, .08);
+      top: 50%;
+      right: 10%;
+    }
+
+    .cert-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #6366F1, #A855F7);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .cert-logo-text {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .cert-eyebrow {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #F59E0B;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-title {
+      font-size: 2.4rem;
+      font-weight: 900;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+      color: #F59E0B;
+    }
+
+    .cert-presented {
+      font-size: .9rem;
+      color: #94A3B8;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-name {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #F1F5F9;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-desc {
+      font-size: .9rem;
+      color: #94A3B8;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-course-name {
+      display: inline-block;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #A5B4FC;
+      background: rgba(99, 102, 241, .15);
+      border: 1px solid rgba(99, 102, 241, .3);
+      border-radius: 10px;
+      padding: 10px 24px;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 28px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      position: relative;
+      z-index: 1;
+    }
+
+    .cert-sig-block {
+      text-align: left;
+    }
+
+    .cert-sig-line {
+      width: 140px;
+      height: 1px;
+      background: rgba(255, 255, 255, .2);
+      margin-bottom: 6px;
+    }
+
+    .cert-sig-name {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #F1F5F9;
+    }
+
+    .cert-sig-title {
+      font-size: .72rem;
+      color: #64748B;
+    }
+
+    .cert-meta {
+      text-align: right;
+    }
+
+    .cert-meta .cert-id {
+      font-size: .7rem;
+      color: #475569;
+      font-family: monospace;
+    }
+
+    .cert-meta .cert-date {
+      font-size: .78rem;
+      color: #94A3B8;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    /* ---- Certificate Grid Cards ---- */
+    .cert-grid-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .cert-grid-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--amber);
+      box-shadow: 0 8px 32px rgba(245, 158, 11, .15);
+    }
+
+    .cert-card-banner {
+      padding: 32px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #0D1330, #1A2240);
+      border-bottom: 1px solid var(--border-light);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cert-card-banner::before {
+      content: '🏆';
+      position: absolute;
+      font-size: 100px;
+      opacity: .05;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .cert-card-body {
+      padding: 20px;
+    }
+
+    .cert-card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      .certificate-printable,
+      .certificate-printable * {
+        visibility: visible !important;
+      }
+
+      .certificate-printable {
+        position: fixed;
+        inset: 0;
+        margin: 0;
+        border-radius: 0;
+        padding: 48px 80px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dash-layout">
+    <div id="sidebarContainer"></div>
+    <main class="dash-main" id="dashMain">
+      <div id="topbarContainer"></div>
+      <div class="dash-content">
+
+        <div class="dash-page-header">
+          <div>
+            <h1>My Profile</h1>
+            <p>Manage your account settings and view your earned certificates</p>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs" data-tabs-parent="true" style="max-width:400px;margin-bottom:32px">
+          <button class="tab-btn active" data-tab="tab-settings" id="tabBtnSettings">Account Settings</button>
+          <button class="tab-btn" data-tab="tab-certs" id="tabBtnCerts">Certificates <span id="certCountBadge"
+              class="badge badge-accent" style="margin-left:6px;display:none"></span></button>
+        </div>
+
+        <!-- ======================== ACCOUNT SETTINGS ======================== -->
+        <div id="tab-settings" class="tab-content active">
+          <div class="card" style="max-width:620px;padding:32px">
+
+            <!-- AVATAR SECTION -->
+            <div style="display:flex;align-items:center;gap:24px;margin-bottom:32px">
+              <!-- Hidden file input -->
+              <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/gif, image/webp" />
+
+              <!-- Clickable avatar wrapper -->
+              <div class="avatar-wrapper" onclick="document.getElementById('avatarFileInput').click()"
+                title="Click to upload new avatar">
+                <div id="profAvatarWrap">
+                  <!-- JS fills this with img or initials div -->
+                </div>
+                <div class="avatar-overlay">
+                  <span>📷</span>
+                  Change
+                </div>
+              </div>
+
+              <div>
+                <button class="btn btn-outline btn-sm mb-2"
+                  onclick="document.getElementById('avatarFileInput').click()">
+                  📷 Upload new avatar
+                </button>
+                <p style="font-size:.75rem;color:var(--text-secondary)">JPG, GIF, PNG or WebP. Max size 800 KB</p>
+                <p id="avatarStatus" style="font-size:.75rem;color:var(--accent);margin-top:4px;display:none">✅ Avatar
+                  updated!</p>
+              </div>
+            </div>
+
+            <!-- PROFILE FORM -->
+            <form id="profForm" onsubmit="saveProfile(event)">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="pName" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="pEmail" class="form-control" required readonly
+                  style="opacity:0.6;cursor:not-allowed" />
+                <div class="form-hint">Email cannot be changed.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bio</label>
+                <textarea id="pBio" class="form-control" placeholder="Tell us a bit about yourself..."
+                  rows="3"></textarea>
+              </div>
+
+              <h4 style="margin:28px 0 16px;border-top:1px solid var(--border-light);padding-top:24px">Change Password
+              </h4>
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" id="pCurrPass" class="form-control" placeholder="Enter current password" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" id="pNewPass" class="form-control" placeholder="At least 6 characters" />
+              </div>
+
+              <div style="margin-top:28px;display:flex;justify-content:flex-end">
+                <button type="submit" class="btn btn-primary" id="saveBtn">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ======================== CERTIFICATES ======================== -->
+        <div id="tab-certs" class="tab-content">
+          <div id="certsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:28px">
+          </div>
+        </div>
+
+      </div><!-- /dash-content -->
+    </main>
+  </div>
+
+  <!-- ======================== CERTIFICATE MODAL ======================== -->
+  <div class="cert-modal-overlay" id="certModal" onclick="closeCertModal(event)">
+    <div class="cert-modal-box" id="certModalBox">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="font-size:1rem">Certificate Preview</h3>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-accent btn-sm" onclick="downloadCert()">⬇ Download PNG</button>
+          <button class="btn btn-outline btn-sm" onclick="printCert()">🖨️ Print / PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('certModal').classList.remove('open')">✕
+            Close</button>
+        </div>
+      </div>
+      <!-- The printable certificate goes here -->
+      <div id="certPreviewContainer"></div>
+    </div>
+  </div>
+
+  <script src="../js/app.js"></script>
+  <script>
+    /* ===================== SETUP ===================== */
+    let session = Auth.getSession();
+    if (!session) window.location.href = '../login.html';
+
+    document.getElementById('sidebarContainer').innerHTML = renderSidebar(session.role, 'profile');
+    document.getElementById('topbarContainer').innerHTML = renderTopbar('Profile');
+
+    let user = DB.getById('users', session.userId);
+
+    /* ===================== AVATAR RENDERING ===================== */
+    function renderAvatar() {
+      const wrap = document.getElementById('profAvatarWrap');
+      if (user.avatar) {
+        wrap.innerHTML = `<img src="${user.avatar}" alt="${user.name}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">`;
+      } else {
+        wrap.innerHTML = `<div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#A855F7);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;border:3px solid var(--border)">${avatarInitials(user.name)}</div>`;
+      }
+    }
+    renderAvatar();
+
+    /* ===================== AVATAR UPLOAD ===================== */
+    document.getElementById('avatarFileInput').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      // Validate size (800 KB max)
+      if (file.size > 800 * 1024) {
+        showToast('Image too large! Max allowed size is 800 KB.', 'error');
+        this.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64 = e.target.result;
+
+        // Save to DB
+        user = DB.update('users', user.id, { avatar: base64 });
+
+        // Update session name display (avatar isn't in session but update name if changed)
+        renderAvatar();
+
+        // Show status
+        const status = document.getElementById('avatarStatus');
+        status.style.display = 'block';
+        setTimeout(() => status.style.display = 'none', 3000);
+
+        showToast('Profile photo updated! ✅', 'success');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    /* ===================== FILL FORM ===================== */
+    document.getElementById('pName').value = user.name;
+    document.getElementById('pEmail').value = user.email;
+    document.getElementById('pBio').value = user.bio || '';
+
+    /* ===================== SAVE PROFILE ===================== */
+    function saveProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      const updates = {
+        name: document.getElementById('pName').value.trim(),
+        bio: document.getElementById('pBio').value.trim(),
+      };
+
+      const currPass = document.getElementById('pCurrPass').value;
+      const newPass = document.getElementById('pNewPass').value;
+
+      if (currPass || newPass) {
+        if (currPass !== user.password) {
+          showToast('Current password is incorrect', 'error');
+          btn.textContent = 'Save Changes'; btn.disabled = false;
+          return;
+        }
+        if (newPass.length < 6) {
+          showToast('New password must be at least 6 characters', 'error');
+          btn.textContent = 'Save Changes'; btn.disabled = false;
+          return;
+        }
+        updates.password = newPass;
+      }
+
+      user = DB.update('users', user.id, updates);
+      session.name = user.name;
+      sessionStorage.setItem('skillnest_session', JSON.stringify(session));
+
+      // Refresh avatar in case name changed
+      if (!user.avatar) renderAvatar();
+
+      setTimeout(() => {
+        showToast('Profile updated successfully! 🎉', 'success');
+        btn.textContent = 'Save Changes'; btn.disabled = false;
+        document.getElementById('pCurrPass').value = '';
+        document.getElementById('pNewPass').value = '';
+      }, 500);
+    }
+
+    /* ===================== CERTIFICATES ===================== */
+    const completedEnrollments = DB.where('enrollments', 'student_id', user.id)
+      .filter(e => e.progress === 100);
+
+    const grid = document.getElementById('certsGrid');
+
+    if (completedEnrollments.length === 0) {
+      grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🎓</div>
+        <h3>No Certificates Yet</h3>
+        <p>Complete a course to earn your verified certificate of completion.</p>
+        <a href="../courses.html" class="btn btn-primary mt-4">Browse Courses</a>
+      </div>`;
+    } else {
+      // Show badge count
+      const badge = document.getElementById('certCountBadge');
+      badge.textContent = completedEnrollments.length;
+      badge.style.display = 'inline-flex';
+
+      grid.innerHTML = completedEnrollments.map((e, idx) => {
+        const course = DB.getById('courses', e.course_id);
+        const teacher = DB.getById('users', course?.teacher_id);
+        const certId = 'SN-' + e.id.toUpperCase().substring(0, 8);
+        const completedDate = formatDate(e.enrolled_at); // use enrolled_at as approximate
+
+        return `
+      <div class="cert-grid-card">
+        <div class="cert-card-banner">
+          <div style="font-size:.72rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:12px">Certificate of Completion</div>
+          <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--amber),#F97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px">🏆</div>
+          <div style="font-weight:800;font-size:1rem;color:var(--text-primary);margin-bottom:6px">${course?.title || 'Unknown Course'}</div>
+          <div style="font-size:.8rem;color:var(--text-secondary)">Instructor: ${teacher?.name || 'SkillNest'}</div>
+        </div>
+        <div class="cert-card-body">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:.8rem;color:var(--text-secondary)">
+            <span>📅 Completed: <strong style="color:var(--text-primary)">${completedDate}</strong></span>
+            <span style="font-family:monospace;font-size:.72rem;color:var(--text-muted)">${certId}</span>
+          </div>
+          <div style="font-size:.82rem;color:var(--text-secondary);margin-bottom:16px">
+            Awarded to <strong style="color:var(--text-primary)">${user.name}</strong> for successfully completing all lectures and requirements.
+          </div>
+          <div class="cert-card-actions">
+            <button class="btn btn-primary btn-sm" style="flex:1" onclick="viewCert(${idx})">👁 View Certificate</button>
+            <button class="btn btn-accent btn-sm" style="flex:1" onclick="downloadCertDirect(${idx})">⬇ Download PNG</button>
+          </div>
+        </div>
+      </div>`;
+      }).join('');
+    }
+
+    /* ===================== CERTIFICATE DATA ===================== */
+    const certData = completedEnrollments.map(e => {
+      const course = DB.getById('courses', e.course_id);
+      const teacher = DB.getById('users', course?.teacher_id);
+      return {
+        enrollment: e,
+        course,
+        teacher,
+        certId: 'SN-' + e.id.toUpperCase().substring(0, 8),
+        completedDate: formatDate(e.enrolled_at),
+      };
+    });
+
+    /* ===================== BUILD CERTIFICATE HTML ===================== */
+    function buildCertHTML(data) {
+      return `
+    <div class="certificate-printable" id="certPrintable">
+      <!-- Background orbs -->
+      <div class="cert-bg-orb cert-bg-orb-1"></div>
+      <div class="cert-bg-orb cert-bg-orb-2"></div>
+      <div class="cert-bg-orb cert-bg-orb-3"></div>
+
+      <!-- Logo -->
+      <div class="cert-logo">
+        <div class="cert-logo-icon">🎓</div>
+        <span class="cert-logo-text">SkillNest</span>
+      </div>
+
+      <!-- Eyebrow -->
+      <div class="cert-eyebrow">✦ Official Certificate ✦</div>
+
+      <!-- Title -->
+      <div class="cert-title">Certificate of Completion</div>
+
+      <!-- Recipient -->
+      <div class="cert-presented">This certificate is proudly presented to</div>
+      <div class="cert-name">${data.course?.title ? user.name : 'Student'}</div>
+      <div class="cert-desc">for successfully completing the course</div>
+
+      <!-- Course name -->
+      <div class="cert-course-name">🎯 ${data.course?.title || 'Course'}</div>
+
+      <!-- Details row -->
+      <div style="display:flex;justify-content:center;gap:40px;margin-bottom:32px;position:relative;z-index:1">
+        <div style="text-align:center">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#64748B;margin-bottom:4px">Category</div>
+          <div style="font-size:.9rem;font-weight:600;color:#A5B4FC">${data.course?.category || 'General'}</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#64748B;margin-bottom:4px">Level</div>
+          <div style="font-size:.9rem;font-weight:600;color:#A5B4FC">${data.course?.level || 'All Levels'}</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+        <div style="text-align:center">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#64748B;margin-bottom:4px">Instructor</div>
+          <div style="font-size:.9rem;font-weight:600;color:#A5B4FC">${data.teacher?.name || 'SkillNest Academy'}</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="cert-footer">
+        <div class="cert-sig-block">
+          <div class="cert-sig-line"></div>
+          <div class="cert-sig-name">M Usman Shafique</div>
+          <div class="cert-sig-title">Platform Director, SkillNest</div>
+        </div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div style="font-size:2.8rem;margin-bottom:4px">⭐</div>
+          <div style="font-size:.7rem;color:#64748B;font-weight:600">VERIFIED</div>
+        </div>
+        <div class="cert-meta">
+          <div class="cert-date">📅 ${data.completedDate}</div>
+          <div class="cert-id">ID: ${data.certId}</div>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    /* ===================== VIEW CERT ===================== */
+    let activeCertIdx = 0;
+
+    window.viewCert = function (idx) {
+      activeCertIdx = idx;
+      const data = certData[idx];
+      document.getElementById('certPreviewContainer').innerHTML = buildCertHTML(data);
+      document.getElementById('certModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeCertModal = function (e) {
+      if (e.target === document.getElementById('certModal')) {
+        document.getElementById('certModal').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    };
+
+    /* ===================== DOWNLOAD HELPER (shared by both modal & card buttons) ===================== */
+    function runCertDownload(idx) {
+      const data = certData[idx];
+      showToast('Generating certificate…', 'info', 2500);
+
+      // Build an off-screen container with the exact same HTML
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;opacity:0;pointer-events:none;';
+      wrapper.innerHTML = buildCertHTML(data);
+      document.body.appendChild(wrapper);
+
+      const el = wrapper.firstElementChild;
+
+      html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0D1330',
+        logging: false,
+        width: 800,
+        height: el.offsetHeight || 600
+      }).then(canvas => {
+        document.body.removeChild(wrapper);
+        const link = document.createElement('a');
+        link.download = `SkillNest_Certificate_${(data.course?.title || 'Course').replace(/\s+/g, '_')}_${user.name.replace(/\s+/g, '_')}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Certificate downloaded! 🎉', 'success');
+      }).catch(() => {
+        if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+        showToast('Download failed. Try Print/PDF from View Certificate.', 'error');
+      });
+    }
+
+    /* ===================== MODAL DOWNLOAD BUTTON ===================== */
+    window.downloadCert = function () {
+      runCertDownload(activeCertIdx);
+    };
+
+    /* ===================== GRID CARD DIRECT DOWNLOAD ===================== */
+    window.downloadCertDirect = function (idx) {
+      activeCertIdx = idx;
+      runCertDownload(idx);
+    };
+
+    /* ===================== PRINT CERT ===================== */
+    window.printCert = function () {
+      // Make sure the modal is open so the certificate is in the DOM for @media print
+      if (!document.getElementById('certModal').classList.contains('open')) {
+        viewCert(activeCertIdx);
+        setTimeout(() => window.print(), 300);
+      } else {
+        window.print();
+      }
+    };
+
+  </script>
+</body>
+
+</html>

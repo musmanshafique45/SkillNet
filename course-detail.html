@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Course Detail – SkillNest</title>
+<link rel="stylesheet" href="css/main.css"/>
+<style>
+.detail-layout{display:grid;grid-template-columns:1fr 360px;gap:32px;align-items:start}
+.detail-hero{padding:100px 0 40px;background:linear-gradient(180deg,rgba(10,14,26,1) 0%,var(--bg-secondary) 100%);border-bottom:1px solid var(--border-light)}
+.detail-hero-inner{display:grid;grid-template-columns:1fr 360px;gap:32px;align-items:center}
+.enroll-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;position:sticky;top:90px}
+.enroll-thumb{width:100%;aspect-ratio:16/9;object-fit:cover}
+.enroll-body{padding:24px}
+.enroll-price{font-size:2rem;font-weight:800;margin-bottom:16px}
+.enroll-price.free{color:var(--accent)}
+.course-includes{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.course-includes li{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--text-secondary)}
+.meta-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.meta-item{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-secondary)}
+.instructor-card{display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);margin-bottom:24px}
+.instructor-avatar-lg{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#A855F7);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;flex-shrink:0}
+.what-you-learn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.learn-item{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;color:var(--text-secondary)}
+.learn-item span:first-child{color:var(--accent);font-size:.9rem;flex-shrink:0;margin-top:2px}
+@media(max-width:1024px){.detail-layout,.detail-hero-inner{grid-template-columns:1fr}.enroll-card{position:static}.detail-hero .enroll-card{display:none}}
+@media(max-width:768px){.what-you-learn{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="navContainer"></div>
+
+<!-- HERO -->
+<div class="detail-hero" id="courseHero">
+  <div class="container detail-hero-inner">
+    <div id="heroLeft"><div class="skeleton" style="height:200px;border-radius:12px"></div></div>
+    <div id="heroCard"></div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="detail-layout">
+    <div>
+      <!-- TABS -->
+      <div class="tabs" data-tabs-parent="true" id="detailTabs">
+        <button class="tab-btn active" data-tab="tab-overview">Overview</button>
+        <button class="tab-btn" data-tab="tab-curriculum">Curriculum</button>
+        <button class="tab-btn" data-tab="tab-instructor">Instructor</button>
+        <button class="tab-btn" data-tab="tab-reviews">Reviews</button>
+      </div>
+
+      <div id="tab-overview" class="tab-content active">
+        <div id="overviewContent"></div>
+      </div>
+
+      <div id="tab-curriculum" class="tab-content">
+        <div id="curriculumContent"></div>
+      </div>
+
+      <div id="tab-instructor" class="tab-content">
+        <div id="instructorContent"></div>
+      </div>
+
+      <div id="tab-reviews" class="tab-content">
+        <div id="reviewsContent"></div>
+      </div>
+    </div>
+
+    <!-- STICKY ENROLL CARD (DESKTOP) -->
+    <div id="sideEnrollCard"></div>
+  </div>
+</div>
+
+<!-- RELATED -->
+<div class="container" style="padding-bottom:80px">
+  <h2 style="margin-bottom:24px">Related Courses</h2>
+  <div id="relatedGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px"></div>
+</div>
+
+<div id="footerContainer"></div>
+
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('navContainer').innerHTML = renderPublicNav('courses');
+  document.getElementById('footerContainer').innerHTML = renderPublicFooter();
+
+  const courseId = new URLSearchParams(window.location.search).get('id') || 'c1';
+  const course = DB.getById('courses', courseId);
+
+  if (!course) {
+    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px"><h2>Course not found</h2><a href="courses.html" class="btn btn-primary">Browse Courses</a></div>';
+  } else {
+    const teacher = DB.getById('users', course.teacher_id);
+    const lectures = DB.where('lectures','course_id', courseId).sort((a,b)=>a.order_index-b.order_index);
+    const quizzes = DB.where('quizzes','course_id', courseId);
+    const enrolled = isEnrolled(courseId);
+
+    document.title = course.title + ' – SkillNest';
+
+    // HERO LEFT
+    document.getElementById('heroLeft').innerHTML = `
+      <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-primary">${course.category}</span>
+        ${levelBadge(course.level)}
+        ${statusBadge(course.status)}
+      </div>
+      <h1 style="font-size:clamp(1.5rem,3vw,2.2rem);margin-bottom:14px">${course.title}</h1>
+      <p style="font-size:1rem;margin-bottom:20px">${truncate(course.description,160)}</p>
+      <div class="meta-row">
+        <div class="meta-item"><span style="color:var(--amber)">★</span> ${course.rating} rating</div>
+        <div class="meta-item">👥 ${course.students.toLocaleString()} students</div>
+        <div class="meta-item">🎬 ${lectures.length} lectures</div>
+        <div class="meta-item">🏷️ ${course.tags?.join(', ') || ''}</div>
+      </div>
+      <div class="meta-item" style="font-size:.85rem">By <strong style="color:var(--primary)">${teacher?.name || 'Instructor'}</strong> · Updated ${formatDate(course.created_at)}</div>`;
+
+    // ENROLL CARD (shared)
+    const enrollCardHtml = () => `
+      <img src="${course.thumbnail}" alt="${course.title}" class="enroll-thumb" onerror="this.style.background='var(--primary)'">
+      <div class="enroll-body">
+        <div class="enroll-price ${course.price===0?'free':''}">${formatPrice(course.price)}</div>
+        ${enrolled
+          ? `<a href="student/player.html?course=${courseId}" class="btn btn-accent w-full btn-lg" style="margin-bottom:12px">▶ Continue Learning</a>`
+          : `<button onclick="doEnroll()" class="btn btn-primary w-full btn-lg" id="enrollBtn" style="margin-bottom:12px">🎓 Enroll Now</button>`}
+        ${course.price>0 && !enrolled ? `<p style="text-align:center;font-size:.78rem;color:var(--text-muted)">30-day money-back guarantee</p>` : ''}
+        <ul class="course-includes">
+          <li>🎬 <span>${lectures.length} video lectures</span></li>
+          <li>📝 <span>${quizzes.length} quizzes</span></li>
+          <li>♾️ <span>Full lifetime access</span></li>
+          <li>🏆 <span>Certificate of completion</span></li>
+          <li>📱 <span>Access on all devices</span></li>
+        </ul>
+        <div class="divider"></div>
+        <div style="text-align:center">
+          <button onclick="window.location.href='courses.html'" class="btn btn-ghost btn-sm w-full">Browse More Courses</button>
+        </div>
+      </div>`;
+
+    document.getElementById('heroCard').innerHTML = `<div class="enroll-card">${enrollCardHtml()}</div>`;
+    document.getElementById('sideEnrollCard').innerHTML = `<div class="enroll-card">${enrollCardHtml()}</div>`;
+
+    // OVERVIEW TAB
+    document.getElementById('overviewContent').innerHTML = `
+      <h3 style="margin-bottom:20px">What You'll Learn</h3>
+      <div class="what-you-learn" style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:24px;margin-bottom:28px">
+        ${(course.tags||[]).concat(['Real-world projects','Certificate of completion','Community access','Expert mentorship']).map(t => `
+          <div class="learn-item"><span>✓</span><span>${t}</span></div>`).join('')}
+      </div>
+      <h3 style="margin-bottom:16px">About This Course</h3>
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:24px;margin-bottom:28px">
+        <p style="line-height:1.9">${course.description}</p>
+      </div>
+      <h3 style="margin-bottom:16px">Requirements</h3>
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:24px">
+        <ul style="display:flex;flex-direction:column;gap:8px;padding-left:0;list-style:none">
+          <li style="display:flex;gap:10px;font-size:.9rem;color:var(--text-secondary)"><span>•</span>A computer with internet access</li>
+          <li style="display:flex;gap:10px;font-size:.9rem;color:var(--text-secondary)"><span>•</span>Basic computer literacy</li>
+          <li style="display:flex;gap:10px;font-size:.9rem;color:var(--text-secondary)"><span>•</span>Willingness to learn and practice daily</li>
+        </ul>
+      </div>`;
+
+    // CURRICULUM TAB
+    const lectureRows = lectures.map((l,i) => `
+      <div class="accordion-item" ${i===0?'':''}>
+        <div class="accordion-header">
+          <div class="accordion-title">
+            <span style="width:28px;height:28px;background:var(--bg-secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700">${l.order_index}</span>
+            ${l.title}
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:.8rem;color:var(--text-secondary)">🕐 ${l.duration}</span>
+            <span class="accordion-icon" style="color:var(--text-muted)">▼</span>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <p style="font-size:.88rem">${l.description}</p>
+          ${enrolled ? `<a href="student/player.html?course=${courseId}&lecture=${l.id}" class="btn btn-outline btn-sm" style="margin-top:12px">▶ Watch Lecture</a>` : `<span class="badge badge-muted" style="margin-top:8px">🔒 Enroll to access</span>`}
+        </div>
+      </div>`).join('');
+
+    document.getElementById('curriculumContent').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <h3 style="margin-bottom:4px">${lectures.length} Lectures</h3>
+          <p style="font-size:.88rem">${quizzes.length} quizzes included</p>
+        </div>
+      </div>
+      <div>${lectureRows}</div>
+      ${quizzes.length ? `
+        <div style="margin-top:24px">
+          <h4 style="margin-bottom:12px">📝 Quizzes</h4>
+          ${quizzes.map(q=>`
+          <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <span>📝</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.9rem">${q.title}</div>
+              <div style="font-size:.78rem;color:var(--text-secondary)">${q.time_limit} min · ${q.max_attempts} attempts</div>
+            </div>
+            ${enrolled ? `<a href="student/quiz.html?quiz=${q.id}" class="btn btn-primary btn-sm">Start Quiz</a>` : `<span class="badge badge-muted">🔒 Enroll</span>`}
+          </div>`).join('')}
+        </div>` : ''}`;
+
+    // INSTRUCTOR TAB
+    document.getElementById('instructorContent').innerHTML = `
+      <div class="instructor-card">
+        <div class="instructor-avatar-lg">${avatarInitials(teacher?.name)}</div>
+        <div>
+          <h3 style="margin-bottom:4px">${teacher?.name || 'Unknown Instructor'}</h3>
+          <p style="font-size:.88rem;margin-bottom:12px">${teacher?.bio || 'Expert instructor'}</p>
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+            <div style="font-size:.82rem;color:var(--text-secondary)">📚 ${DB.where('courses','teacher_id',course.teacher_id).length} courses</div>
+            <div style="font-size:.82rem;color:var(--text-secondary)">👥 ${DB.where('courses','teacher_id',course.teacher_id).reduce((s,c)=>s+c.students,0).toLocaleString()} students</div>
+            <div style="font-size:.82rem;color:var(--text-secondary)">⭐ Expert instructor</div>
+          </div>
+        </div>
+      </div>`;
+
+    // REVIEWS TAB
+    const reviewData = [
+      { name:'Mohammed K.', rating:5, text:'Absolutely the best course I have ever taken. The explanations are crystal clear and the projects are amazing.', date:'2 weeks ago' },
+      { name:'Lisa C.', rating:5, text:'Highly recommend! I went from zero to building real apps in just 6 weeks.', date:'1 month ago' },
+      { name:'James T.', rating:4, text:'Great content and well-structured. Would love more advanced sections but overall fantastic.', date:'3 weeks ago' },
+    ];
+    document.getElementById('reviewsContent').innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:32px">
+        <div style="text-align:center">
+          <div style="font-size:4rem;font-weight:800;color:var(--amber)">${course.rating}</div>
+          <div style="color:var(--amber);font-size:1.2rem">★★★★★</div>
+          <div style="font-size:.82rem;color:var(--text-secondary)">Course Rating</div>
+        </div>
+        <div style="flex:1">
+          ${[5,4,3,2,1].map(s=>`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <div class="progress-bar" style="flex:1"><div class="progress-fill amber" style="width:${s===5?75:s===4?18:s===3?5:2}%"></div></div>
+            <span style="font-size:.78rem;color:var(--amber);width:16px">${s}★</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      ${reviewData.map(r=>`
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#A855F7);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">${r.name.substring(0,2)}</div>
+          <div><div style="font-weight:600;font-size:.9rem">${r.name}</div><div style="color:var(--amber);font-size:.85rem">${'★'.repeat(r.rating)}</div></div>
+          <div style="margin-left:auto;font-size:.78rem;color:var(--text-muted)">${r.date}</div>
+        </div>
+        <p style="font-size:.88rem;line-height:1.7">${r.text}</p>
+      </div>`).join('')}`;
+
+    // RELATED COURSES
+    const related = DB.getAll('courses').filter(c => c.status==='published' && c.category===course.category && c.id!==courseId).slice(0,3);
+    document.getElementById('relatedGrid').innerHTML = related.length ? related.map(c=>renderCourseCard(c)).join('') : '<p style="color:var(--text-secondary)">No related courses found.</p>';
+
+    // Reinit accordions & tabs
+    initAccordions();
+    initTabs();
+
+    function doEnroll() {
+      const session = Auth.getSession();
+      if (!session) { window.location.href = 'login.html'; return; }
+      const enrollment = enrollCourse(courseId);
+      if (enrollment) {
+        setTimeout(() => window.location.href = 'student/player.html?course=' + courseId, 1200);
+      }
+    }
+    window.doEnroll = doEnroll;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Category Management – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1>Categories</h1><p>Manage course categories and tags</p></div>
+        <button class="btn btn-primary" onclick="openModal('addCatModal')">➕ Add Category</button>
+      </div>
+
+      <div class="grid-3" id="catGrid"></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal-overlay" id="addCatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="margin:0">Add Category</h3>
+      <button class="modal-close" onclick="closeModal('addCatModal')">✕</button>
+    </div>
+    <form id="addCatForm" onsubmit="saveCategory(event)">
+      <div class="form-group">
+        <label class="form-label">Category Name</label>
+        <input type="text" id="catName" class="form-control" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon (Emoji)</label>
+        <input type="text" id="catIcon" class="form-control" maxlength="2" required placeholder="e.g. 💻"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color (Hex)</label>
+        <input type="color" id="catColor" class="form-control" value="#6366F1" style="padding:4px;height:48px;cursor:pointer"/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:32px">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addCatModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['admin']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('admin','categories');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('Categories');
+
+  let categories = DB.getAll('categories');
+
+  function renderCats() {
+    document.getElementById('catGrid').innerHTML = categories.map((c, i) => `
+      <div class="card" style="padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center">
+        <div style="width:64px;height:64px;border-radius:16px;background:${c.color}15;color:${c.color};display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:16px">${c.icon}</div>
+        <h4 style="margin-bottom:8px">${c.name}</h4>
+        <div style="font-size:.85rem;color:var(--text-secondary);margin-bottom:24px">${c.count} courses</div>
+        <div style="display:flex;gap:12px;width:100%">
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="alert('Edit logic here')">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="delCat(${i})">🗑️</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.saveCategory = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('catName').value;
+    const icon = document.getElementById('catIcon').value;
+    const color = document.getElementById('catColor').value;
+    
+    const cat = { id: generateId('cat'), name, icon, color, count: 0 };
+    categories.push(cat);
+    DB.save({ ...DB.get(), categories });
+    
+    closeModal('addCatModal');
+    showToast('Category added!', 'success');
+    document.getElementById('addCatForm').reset();
+    renderCats();
+  }
+
+  window.delCat = function(i) {
+    if(confirm('Delete category?')) {
+      categories.splice(i, 1);
+      DB.save({ ...DB.get(), categories });
+      showToast('Category deleted', 'success');
+      renderCats();
+    }
+  }
+
+  renderCats();
+</script>
+</body>
+</html>

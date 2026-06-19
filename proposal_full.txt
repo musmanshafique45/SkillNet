@@ -1,0 +1,109 @@
+﻿PROJECT PROPOSAL
+SkillNest
+E-Learning Platform
+Web Design & Development
+1. Executive Summary
+This proposal presents the Web Design and Development plan for SkillNest, a modern e-learning platform that enables students to browse courses, watch video lectures, and attempt quizzes online. Teachers and administrators will have a dedicated web portal to upload and manage course content, monitor student progress, and configure the platform.
+The web design and development scope covers the full front-end and back-end of the platform ù from UI/UX wireframing and visual design to database architecture, API development, and deployment. The goal is to deliver a responsive, fast, and intuitive web application that serves all user roles effectively.
+2. Project Overview
+SkillNest aims to bridge the gap between learners and quality educational content through a structured, web-based platform. The platform is built around three user roles, each with a tailored experience:
+Students
+Students can register, browse available courses, watch video lectures, track their progress, attempt quizzes, and receive certificates upon course completion. The student interface is designed to be clean, distraction-free, and engaging.
+Teachers
+Teachers have access to a content management portal where they can create and publish courses, upload video lectures and supporting materials, build quiz questions, and monitor student performance within their courses.
+Administrators
+Administrators manage the overall platform ù approving teacher accounts, moderating content, viewing platform-wide analytics, and configuring system settings. The admin panel provides a full overview of platform health and activity.
+3. Project Objectives
+The key objectives of the Web Design & Development phase are:
+Design a clean, modern, and responsive user interface for all three user roles.
+Develop a fully functional web application with secure authentication and role-based access control.
+Build a robust course management system for teachers to upload and organize learning content.
+Implement an interactive quiz engine that supports multiple question types with auto-grading.
+Create an admin dashboard with user management and platform analytics capabilities.
+Ensure the platform is performant, accessible, and cross-browser compatible.
+Deploy the application on a cloud hosting environment with a CI/CD pipeline.
+4. Scope of Work
+4.1 UI/UX Design
+Before any code is written, the design team will create wireframes and high-fidelity mockups for every major screen. A consistent design system will be established to ensure visual uniformity throughout the platform.
+Wireframes for all key screens: Homepage, Course List, Course Detail, Video Player, Quiz, Dashboard
+High-fidelity mockups using Figma with a defined color palette, typography, and component library
+Responsive layouts designed for desktop (1920px), tablet (768px), and mobile (375px)
+User flow diagrams for each role: Student, Teacher, and Admin
+Design system and style guide documenting all reusable UI components
+4.2 Front-End Development
+The front-end will be built using React.js with Next.js for server-side rendering, ensuring fast page loads and good SEO. Tailwind CSS will be used for responsive and consistent styling.
+4.2.1 Authentication & User Management
+Registration and login pages with form validation
+Email verification and password reset flows
+Role-based routing ù students, teachers, and admins see different dashboards
+User profile page with editable personal information and avatar upload
+4.2.2 Student Interface
+Homepage with featured courses, categories, and search bar
+Course listing page with filter (subject, level, rating) and sort options
+Course detail page: description, curriculum, instructor bio, and enroll button
+Video lecture player with progress tracking, chapter navigation, and bookmarks
+Student dashboard: enrolled courses, progress bars, and completion certificates
+Quiz-taking interface with question display, timer countdown, and auto-submit
+Results page: score, correct/incorrect breakdown, and answer explanations
+4.2.3 Teacher Portal
+Teacher dashboard: course list, student enrollment stats, and quiz performance overview
+Course creation wizard: title, description, thumbnail, category, and difficulty
+Module and lecture management: add, reorder, edit, and delete lectures
+Video upload interface with progress indicator and file format validation
+Quiz builder: add MCQ, True/False, and Short Answer questions with correct answers
+Course publish, draft, and archive controls
+4.2.4 Admin Panel
+Admin dashboard with platform statistics: total users, courses, enrollments, and completions
+User management table: search, filter, view, activate, or deactivate accounts
+Course moderation: approve or reject submitted courses
+Category and tag management for course organization
+System settings: platform name, logo, email configuration
+4.3 Back-End Development
+The back-end will be built with Node.js and Express.js, providing a RESTful API consumed by the front-end. PostgreSQL will be used as the primary relational database for structured data, with cloud storage for media files.
+4.3.1 API Development
+Authentication APIs: register, login, logout, refresh token, password reset
+User APIs: get profile, update profile, change password
+Course APIs: create, read, update, delete, publish, list with filters
+Lecture APIs: upload video, update details, reorder within course
+Enrollment APIs: enroll, track progress, mark lecture complete
+Quiz APIs: create quiz, submit answers, retrieve results
+Admin APIs: user management, course approval, analytics data
+4.3.2 Database Design
+Users table: id, name, email, password hash, role, created_at
+Courses table: id, teacher_id, title, description, category, status, created_at
+Lectures table: id, course_id, title, video_url, duration, order_index
+Enrollments table: id, student_id, course_id, progress, enrolled_at
+Quizzes table: id, course_id, title, time_limit, max_attempts
+Questions table: id, quiz_id, type, question_text, correct_answer
+Quiz Attempts table: id, student_id, quiz_id, score, submitted_at
+4.3.3 File Storage & Media
+Video uploads stored on AWS S3 or Cloudinary with CDN delivery
+Image uploads (thumbnails, avatars) optimized and stored on cloud storage
+File size and format validation enforced on both front-end and back-end
+Chunked video upload support for large file sizes
+4.4 Security
+JWT-based authentication with refresh token rotation
+Password hashing using bcrypt
+Input sanitization and SQL injection prevention
+HTTPS enforced across all endpoints
+Rate limiting on authentication endpoints to prevent brute-force attacks
+Role-based middleware to protect restricted API routes
+4.5 Deployment & DevOps
+Front-end deployed on Vercel with automatic previews on pull requests
+Back-end deployed on Railway or AWS EC2 with environment variable management
+CI/CD pipeline using GitHub Actions: lint, test, and deploy on merge to main
+Domain setup with SSL certificate for HTTPS
+Database hosted on managed PostgreSQL (Supabase or AWS RDS)
+5. Technology Stack
+6. Deliverables
+7. Project Timeline
+8. Team Structure & Responsibilities
+9. Risk Assessment & Mitigation
+10. Budget Estimate
+The following is a high-level budget estimate for the web design and development phase. Costs may vary based on team size and selected service tiers.
+11. Conclusion
+SkillNest represents a well-scoped and technically comprehensive web development project. By focusing on Web Design and Development in this phase, the team will deliver a fully functional, responsive, and secure e-learning platform that serves students, teachers, and administrators with purpose-built interfaces.
+The combination of a modern front-end framework, a clean REST API, scalable cloud storage, and a thoughtful UI/UX design process ensures that the final product will be both technically sound and genuinely usable. With approval from stakeholders, the team is ready to begin Phase 1 immediately.
+Submitted by:  ___________________________
+Date:             ___________________________
+Approved by:  ___________________________

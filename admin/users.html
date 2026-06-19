@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>User Management – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1>User Management</h1><p>View, search, and manage all platform users</p></div>
+      </div>
+
+      <div class="card" style="padding:24px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div class="search-bar" style="max-width:400px;flex:1">
+            <input type="text" id="uSearch" placeholder="Search by name or email..." oninput="filterUsers()"/>
+            <button class="search-btn" style="padding:8px 16px">🔍</button>
+          </div>
+          <select id="uRole" class="form-control" style="width:auto" onchange="filterUsers()">
+            <option value="all">All Roles</option>
+            <option value="student">Students</option>
+            <option value="teacher">Teachers</option>
+            <option value="admin">Admins</option>
+          </select>
+          <select id="uStatus" class="form-control" style="width:auto" onchange="filterUsers()">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyUsers" class="empty-state hidden"><div class="empty-icon">👥</div><h3>No users found</h3></div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['admin']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('admin','users');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('User Management');
+
+  let allUsers = DB.getAll('users');
+
+  function renderUsers(list) {
+    const tbody = document.getElementById('usersTableBody');
+    const empty = document.getElementById('emptyUsers');
+    
+    if(list.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+    } else {
+      empty.classList.add('hidden');
+      tbody.innerHTML = list.map(u => `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="user-row-avatar">${avatarInitials(u.name)}</div>
+              <div><div class="bold" style="color:var(--text-primary)">${u.name}</div><div style="font-size:.75rem">${u.email}</div></div>
+            </div>
+          </td>
+          <td><span style="text-transform:capitalize;font-weight:600;color:var(${u.role==='teacher'?'--accent':u.role==='admin'?'--amber':'--primary'})">${u.role}</span></td>
+          <td>${statusBadge(u.status)}</td>
+          <td>${formatDate(u.created_at)}</td>
+          <td>
+            <div class="table-actions">
+              ${u.id !== session.userId ? `<button class="btn btn-outline btn-sm" onclick="toggleStatus('${u.id}')">${u.status==='active'?'Deactivate':'Activate'}</button>` : '<span class="badge badge-muted">You</span>'}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function filterUsers() {
+    const term = document.getElementById('uSearch').value.toLowerCase();
+    const role = document.getElementById('uRole').value;
+    const stat = document.getElementById('uStatus').value;
+
+    const filtered = allUsers.filter(u => {
+      if (term && !u.name.toLowerCase().includes(term) && !u.email.toLowerCase().includes(term)) return false;
+      if (role !== 'all' && u.role !== role) return false;
+      if (stat !== 'all' && u.status !== stat) return false;
+      return true;
+    });
+    
+    renderUsers(filtered);
+  }
+
+  window.toggleStatus = function(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    const newStatus = u.status === 'active' ? 'inactive' : 'active';
+    DB.update('users', id, { status: newStatus });
+    u.status = newStatus; // update local ref
+    showToast(`User marked as ${newStatus}`, 'success');
+    filterUsers();
+  }
+
+  // Init
+  filterUsers();
+</script>
+</body>
+</html>

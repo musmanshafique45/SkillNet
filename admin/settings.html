@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>System Settings – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1>System Settings</h1><p>Configure global platform settings</p></div>
+      </div>
+
+      <div class="card" style="max-width:700px;padding:32px">
+        <form onsubmit="saveSettings(event)">
+          <div class="form-group">
+            <label class="form-label">Platform Name</label>
+            <input type="text" id="sName" class="form-control" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tagline</label>
+            <input type="text" id="sTagline" class="form-control"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Support Email</label>
+            <input type="email" id="sEmail" class="form-control" required/>
+          </div>
+
+          <h3 style="margin:32px 0 20px;padding-top:24px;border-top:1px solid var(--border-light)">Registration Rules</h3>
+          
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius)">
+            <input type="checkbox" id="sReg" style="accent-color:var(--primary);width:20px;height:20px"/>
+            <div>
+              <div style="font-weight:600">Allow Open Registration</div>
+              <div style="font-size:.8rem;color:var(--text-secondary)">Anyone can create an account</div>
+            </div>
+          </div>
+          
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius)">
+            <input type="checkbox" id="sApprove" style="accent-color:var(--primary);width:20px;height:20px"/>
+            <div>
+              <div style="font-weight:600">Require Approval for Teachers</div>
+              <div style="font-size:.8rem;color:var(--text-secondary)">Teacher accounts must be manually approved by an admin</div>
+            </div>
+          </div>
+          
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius)">
+            <input type="checkbox" id="sMaint" style="accent-color:var(--danger);width:20px;height:20px"/>
+            <div>
+              <div style="font-weight:600;color:var(--danger)">Maintenance Mode</div>
+              <div style="font-size:.8rem;color:var(--text-secondary)">Disable all public access. Only admins can log in.</div>
+            </div>
+          </div>
+
+          <div style="margin-top:32px;display:flex;justify-content:flex-end">
+            <button type="submit" class="btn btn-primary btn-lg">💾 Save Settings</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['admin']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('admin','settings');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('Settings');
+
+  const settings = DB.get().settings;
+
+  document.getElementById('sName').value = settings.platform_name;
+  document.getElementById('sTagline').value = settings.platform_tagline;
+  document.getElementById('sEmail').value = settings.support_email;
+  document.getElementById('sReg').checked = settings.allow_registration;
+  document.getElementById('sApprove').checked = settings.require_approval;
+  document.getElementById('sMaint').checked = settings.maintenance_mode;
+
+  window.saveSettings = function(e) {
+    e.preventDefault();
+    const newSettings = {
+      platform_name: document.getElementById('sName').value,
+      platform_tagline: document.getElementById('sTagline').value,
+      support_email: document.getElementById('sEmail').value,
+      allow_registration: document.getElementById('sReg').checked,
+      require_approval: document.getElementById('sApprove').checked,
+      maintenance_mode: document.getElementById('sMaint').checked,
+    };
+    
+    DB.save({ ...DB.get(), settings: newSettings });
+    showToast('Settings saved successfully!', 'success');
+  }
+</script>
+</body>
+</html>

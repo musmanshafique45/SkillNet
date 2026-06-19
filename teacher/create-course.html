@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Create Course – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1>Create Course</h1><p>Start building your new course using our step-by-step wizard</p></div>
+      </div>
+
+      <div class="card" style="padding:32px;max-width:800px;margin:0 auto">
+        
+        <!-- WIZARD PROGRESS -->
+        <div class="wizard-steps">
+          <div class="wizard-step active" id="ws1">
+            <div class="wizard-step-wrap"><div class="wizard-step-circle">1</div><div class="wizard-step-label">Basic Info</div></div>
+            <div class="wizard-connector" id="wc1"></div>
+          </div>
+          <div class="wizard-step" id="ws2">
+            <div class="wizard-step-wrap"><div class="wizard-step-circle">2</div><div class="wizard-step-label">Media & Details</div></div>
+            <div class="wizard-connector" id="wc2"></div>
+          </div>
+          <div class="wizard-step" id="ws3" style="flex:0">
+            <div class="wizard-step-wrap"><div class="wizard-step-circle">3</div><div class="wizard-step-label">Pricing & Publish</div></div>
+          </div>
+        </div>
+
+        <form id="courseForm">
+          <!-- STEP 1 -->
+          <div class="wizard-panel active" id="wp1">
+            <h3 style="margin-bottom:20px">Basic Information</h3>
+            <div class="form-group">
+              <label class="form-label">Course Title</label>
+              <input type="text" id="cTitle" class="form-control" placeholder="e.g. Complete React Bootcamp 2026" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="cCat" class="form-control" required>
+                <option value="" disabled selected>Select category...</option>
+                <option value="Web Development">Web Development</option>
+                <option value="Data Science">Data Science</option>
+                <option value="Design">Design</option>
+                <option value="Backend">Backend</option>
+                <option value="Mobile">Mobile</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Difficulty Level</label>
+              <select id="cLevel" class="form-control" required>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="wizard-footer" style="justify-content:flex-end">
+              <button type="button" class="btn btn-primary" onclick="nextStep(1,2)">Next Step →</button>
+            </div>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="wizard-panel" id="wp2">
+            <h3 style="margin-bottom:20px">Media & Details</h3>
+            <div class="form-group">
+              <label class="form-label">Course Description</label>
+              <textarea id="cDesc" class="form-control" placeholder="What will students learn in this course?" required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tags (comma separated)</label>
+              <input type="text" id="cTags" class="form-control" placeholder="e.g. React, JavaScript, Frontend"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Course Thumbnail URL</label>
+              <input type="url" id="cThumb" class="form-control" placeholder="https://..." required/>
+              <div class="form-hint">For demo purposes, please paste an image URL (e.g. from Unsplash)</div>
+            </div>
+            <div class="wizard-footer">
+              <button type="button" class="btn btn-ghost" onclick="nextStep(2,1)">← Back</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(2,3)">Next Step →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="wizard-panel" id="wp3">
+            <h3 style="margin-bottom:20px">Pricing & Publish</h3>
+            <div class="form-group">
+              <label class="form-label">Price (USD)</label>
+              <div class="input-group">
+                <span class="input-icon">$</span>
+                <input type="number" id="cPrice" class="form-control" placeholder="0 for free" min="0" value="0" required/>
+              </div>
+            </div>
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:16px;border-radius:var(--radius);margin-top:24px">
+              <h5 style="color:var(--amber);margin-bottom:8px">Ready to create?</h5>
+              <p style="font-size:.85rem;color:var(--text-secondary)">Your course will be created as a <strong>draft</strong>. You can add lectures and quizzes before publishing it to the platform.</p>
+            </div>
+            <div class="wizard-footer">
+              <button type="button" class="btn btn-ghost" onclick="nextStep(3,2)">← Back</button>
+              <button type="button" class="btn btn-accent" onclick="submitCourse()">✅ Create Course</button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['teacher']);
+  if (session) {
+    document.getElementById('sidebarContainer').innerHTML = renderSidebar('teacher','create');
+    document.getElementById('topbarContainer').innerHTML = renderTopbar('Create Course');
+  }
+
+  function nextStep(current, next) {
+    // Basic validation
+    if (current === 1) {
+      if(!document.getElementById('cTitle').value || !document.getElementById('cCat').value) {
+        showToast('Please fill all required fields', 'error'); return;
+      }
+    }
+    if (current === 2) {
+      if(!document.getElementById('cDesc').value || !document.getElementById('cThumb').value) {
+        showToast('Please fill all required fields', 'error'); return;
+      }
+    }
+
+    document.getElementById(`wp${current}`).classList.remove('active');
+    document.getElementById(`wp${next}`).classList.add('active');
+
+    // Update wizard ui
+    document.getElementById(`ws${current}`).classList.remove('active');
+    document.getElementById(`ws${next}`).classList.add('active');
+    
+    if (next > current) {
+      document.getElementById(`ws${current}`).classList.add('done');
+      if(document.getElementById(`wc${current}`)) document.getElementById(`wc${current}`).classList.add('done');
+    } else {
+      document.getElementById(`ws${next}`).classList.remove('done');
+      if(document.getElementById(`wc${next}`)) document.getElementById(`wc${next}`).classList.remove('done');
+    }
+  }
+
+  function submitCourse() {
+    const title = document.getElementById('cTitle').value;
+    const cat = document.getElementById('cCat').value;
+    const level = document.getElementById('cLevel').value;
+    const desc = document.getElementById('cDesc').value;
+    const tags = document.getElementById('cTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+    const thumb = document.getElementById('cThumb').value;
+    const price = parseInt(document.getElementById('cPrice').value) || 0;
+
+    if (!title || !cat || !desc || !thumb) {
+      showToast('Please fill all fields completely', 'error');
+      return;
+    }
+
+    const course = {
+      id: generateId('c'),
+      teacher_id: session.userId,
+      title: title,
+      description: desc,
+      category: cat,
+      level: level,
+      thumbnail: thumb,
+      tags: tags,
+      price: price,
+      status: 'draft',
+      rating: 0,
+      students: 0,
+      created_at: new Date().toISOString()
+    };
+
+    DB.insert('courses', course);
+    showToast('Course created successfully! Redirecting...', 'success');
+    
+    setTimeout(() => {
+      window.location.href = `manage-course.html?id=${course.id}`;
+    }, 1500);
+  }
+</script>
+</body>
+</html>

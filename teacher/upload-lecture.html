@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Upload Lecture – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div>
+          <button onclick="window.history.back()" class="btn btn-ghost btn-sm mb-4">← Back to Course</button>
+          <h1>Upload Lecture</h1>
+          <p id="cName" style="color:var(--primary);font-weight:600">Loading course...</p>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:700px;margin:0 auto;padding:32px">
+        <form id="uploadForm">
+          <div class="form-group">
+            <label class="form-label">Lecture Title</label>
+            <input type="text" id="lTitle" class="form-control" placeholder="e.g. Introduction to Flexbox" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description / Summary</label>
+            <textarea id="lDesc" class="form-control" style="min-height:80px" placeholder="Briefly describe what this lecture covers..." required></textarea>
+          </div>
+
+          <div style="margin-top:24px">
+            <label class="form-label">Video File</label>
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-icon">🎬</div>
+              <h4>Drag & Drop your video here</h4>
+              <p>or click to browse from your computer</p>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:12px">MP4, WebM up to 2GB</div>
+            </div>
+            <input type="file" id="fileInput" class="hidden" accept="video/mp4,video/webm"/>
+          </div>
+
+          <div id="uploadProgress" class="upload-progress hidden">
+            <div class="upload-file-name">
+              <span>🎬</span> <span id="uFileName">video.mp4</span>
+              <span id="uPercent" style="margin-left:auto;color:var(--primary)">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="uBar" style="width:0%"></div></div>
+          </div>
+
+          <div style="margin-top:32px;border-top:1px solid var(--border-light);padding-top:24px;display:flex;justify-content:flex-end">
+            <button type="button" id="saveBtn" class="btn btn-primary" onclick="saveLecture()" disabled>Save Lecture</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['teacher']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('teacher','upload');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('Upload Lecture');
+
+  const courseId = new URLSearchParams(window.location.search).get('course');
+  const course = DB.getById('courses', courseId);
+  
+  if(!course || course.teacher_id !== session.userId) {
+    alert('Select a valid course to upload to.');
+    window.location.href = 'dashboard.html';
+  } else {
+    document.getElementById('cName').textContent = course.title;
+  }
+
+  // Fake Upload Simulation
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
+  const progBox = document.getElementById('uploadProgress');
+  const uBar = document.getElementById('uBar');
+  const uPercent = document.getElementById('uPercent');
+  const saveBtn = document.getElementById('saveBtn');
+
+  fileInput.addEventListener('change', (e) => {
+    if(e.target.files.length) startSimulatedUpload(e.target.files[0].name);
+  });
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    if(e.dataTransfer.files.length) startSimulatedUpload(e.dataTransfer.files[0].name);
+  });
+
+  function startSimulatedUpload(name) {
+    document.getElementById('uFileName').textContent = name;
+    progBox.classList.remove('hidden');
+    dropZone.classList.add('hidden');
+    saveBtn.disabled = true;
+    
+    let p = 0;
+    const interval = setInterval(() => {
+      p += Math.random() * 15;
+      if (p >= 100) {
+        p = 100;
+        clearInterval(interval);
+        saveBtn.disabled = false;
+        saveBtn.textContent = '✅ Save Lecture';
+      }
+      uBar.style.width = p + '%';
+      uPercent.textContent = Math.round(p) + '%';
+    }, 300);
+  }
+
+  function saveLecture() {
+    const title = document.getElementById('lTitle').value;
+    const desc = document.getElementById('lDesc').value;
+    if(!title || !desc) { showToast('Fill all fields', 'error'); return; }
+
+    const lectures = DB.where('lectures','course_id',courseId);
+    
+    const lecture = {
+      id: generateId('l'),
+      course_id: courseId,
+      title: title,
+      description: desc,
+      duration: Math.floor(Math.random()*15+5)+':'+Math.floor(Math.random()*50+10), // mock length
+      order_index: lectures.length + 1,
+      video_url: 'fake_url'
+    };
+
+    DB.insert('lectures', lecture);
+    showToast('Lecture uploaded successfully!', 'success');
+    setTimeout(() => window.location.href = `manage-course.html?id=${courseId}`, 1500);
+  }
+</script>
+</body>
+</html>

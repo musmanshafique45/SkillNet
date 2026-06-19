@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Course Moderation – SkillNest</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="../css/dashboard.css"/>
+</head>
+<body>
+<div class="dash-layout">
+  <div id="sidebarContainer"></div>
+  <main class="dash-main" id="dashMain">
+    <div id="topbarContainer"></div>
+    <div class="dash-content">
+
+      <div class="dash-page-header">
+        <div><h1>Course Moderation</h1><p>Review, approve or reject courses submitted by teachers</p></div>
+      </div>
+
+      <div class="tabs" data-tabs-parent="true" style="margin-bottom:24px">
+        <button class="tab-btn active" data-tab="tab-pending" onclick="filterCourses('pending')">Pending Approval</button>
+        <button class="tab-btn" data-tab="tab-published" onclick="filterCourses('published')">Published</button>
+        <button class="tab-btn" data-tab="tab-rejected" onclick="filterCourses('rejected')">Rejected</button>
+      </div>
+
+      <div id="coursesList"></div>
+      <div id="emptyCourses" class="empty-state hidden"><div class="empty-icon">✅</div><h3>All caught up</h3><p>No courses in this category.</p></div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  const session = Auth.requireAuth(['admin']);
+  document.getElementById('sidebarContainer').innerHTML = renderSidebar('admin','courses');
+  document.getElementById('topbarContainer').innerHTML = renderTopbar('Course Moderation');
+
+  let allCourses = DB.getAll('courses');
+
+  function renderCourses(list, type) {
+    const container = document.getElementById('coursesList');
+    const empty = document.getElementById('emptyCourses');
+    
+    if(list.length === 0) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+    } else {
+      empty.classList.add('hidden');
+      container.innerHTML = list.map(c => {
+        const teacher = DB.getById('users', c.teacher_id);
+        const lectures = DB.where('lectures','course_id', c.id).length;
+        
+        let actions = '';
+        if(type === 'pending') {
+          actions = `<button class="btn btn-accent btn-sm w-full" onclick="modCourse('${c.id}', 'published')">✅ Approve</button>
+                     <button class="btn btn-danger btn-sm w-full" onclick="modCourse('${c.id}', 'rejected')">❌ Reject</button>`;
+        } else if(type === 'published') {
+          actions = `<button class="btn btn-outline btn-sm w-full" onclick="modCourse('${c.id}', 'draft')">Unpublish</button>`;
+        } else {
+          actions = `<span class="badge badge-danger" style="justify-content:center">Rejected</span>`;
+        }
+
+        return `
+        <div class="moderation-card">
+          <img src="${c.thumbnail}" class="moderation-card-thumb" onerror="this.style.background='var(--primary)'">
+          <div class="moderation-card-body">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <span class="badge badge-primary">${c.category}</span>
+              ${levelBadge(c.level)}
+            </div>
+            <h4 style="margin-bottom:4px;font-size:1.1rem">${c.title}</h4>
+            <div style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px">Instructor: <strong>${teacher?.name}</strong></div>
+            <p style="font-size:.88rem;margin-bottom:16px">${truncate(c.description, 120)}</p>
+            <div style="display:flex;gap:16px;font-size:.8rem;color:var(--text-muted)">
+              <span>💰 ${formatPrice(c.price)}</span>
+              <span>🎬 ${lectures} Lectures</span>
+              <span>📅 ${formatDate(c.created_at)}</span>
+            </div>
+          </div>
+          <div class="moderation-card-actions" style="min-width:180px">
+            <a href="../course-detail.html?id=${c.id}" target="_blank" class="btn btn-ghost btn-sm w-full mb-2">👁️ Preview</a>
+            ${actions}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function filterCourses(status) {
+    const list = allCourses.filter(c => c.status === status);
+    renderCourses(list, status);
+  }
+
+  window.modCourse = function(id, newStatus) {
+    DB.update('courses', id, { status: newStatus });
+    const idx = allCourses.findIndex(x=>x.id===id);
+    if(idx>-1) allCourses[idx].status = newStatus;
+    showToast(`Course marked as ${newStatus}`, 'success');
+    
+    // Refresh current active tab
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab.replace('tab-','');
+    filterCourses(activeTab);
+  }
+
+  // Init
+  filterCourses('pending');
+</script>
+</body>
+</html>
