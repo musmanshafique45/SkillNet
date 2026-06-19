@@ -48,6 +48,6 @@ These Terms shall be governed by and construed in accordance with the applicable
 We reserve the right to modify these Terms at any time. We will notify you of any changes by updating the "Last Updated" date at the top of this page. Your continued use of the Platform after changes are posted constitutes your acceptance of the new Terms.
 
 ### 8. CONTACT INFORMATION
-If you have any questions about these Terms, please contact us at support@skillnet.com.
+If you have any questions about these Terms, please contact us at musmanshafique450@gmail.com.
 
 ---
