@@ -1,0 +1,62 @@
+# Migrate to Laravel Backend
+
+This plan outlines the process of transitioning the SkillNest platform from using a mock `localStorage` database to a real **Laravel & MySQL (XAMPP)** backend. 
+
+To ensure the transition is smooth and doesn't break your existing beautiful UI, we will initially build Laravel as a **Headless REST API**. This means your HTML/CSS/JS will remain exactly the same, but instead of saving to `localStorage`, it will communicate with your new Laravel database automatically!
+
+## Proposed Changes
+
+### Phase 1: Database Setup (Migrations & Models)
+We will create the MySQL tables that exactly match your current `SEED_DATA` structure.
+
+#### [NEW] `skillnest-backend/database/migrations/..._create_users_table.php`
+- Add columns: `name`, `email`, `password`, `role`, `avatar` (longtext), `bio`, `status`.
+
+#### [NEW] `skillnest-backend/database/migrations/..._create_courses_table.php`
+- Add columns: `teacher_id` (foreign key), `title`, `description`, `thumbnail`, `category`, `level`, `price`, `status`, `rating`, `students`, `tags` (json).
+
+#### [NEW] `skillnest-backend/database/migrations/..._create_lectures_table.php`
+- Add columns: `course_id` (foreign key), `title`, `duration`, `order_index`, `description`.
+
+#### [NEW] `skillnest-backend/database/migrations/..._create_enrollments_table.php`
+- Add columns: `student_id`, `course_id`, `progress`, `completed_lectures` (json), `last_lecture`, `completed`.
+
+*We will also create matching Eloquent Models (`User`, `Course`, `Lecture`, `Enrollment`) in `app/Models/` with their correct table relationships defined.*
+
+---
+
+### Phase 2: Database Seeder
+We don't want you to lose the dummy data you already have!
+
+#### [MODIFY] `skillnest-backend/database/seeders/DatabaseSeeder.php`
+- We will translate your exact JavaScript `SEED_DATA` (users, courses, lectures, etc.) into PHP and insert it into the MySQL database automatically.
+- Once done, running `php artisan migrate --seed` will instantly build and fill your entire SQL database!
+
+---
+
+### Phase 3: Build the API Endpoints
+We will create URLs in Laravel that your frontend can talk to.
+
+#### [NEW] `skillnest-backend/routes/api.php`
+Create the following REST endpoints:
+- `GET /api/users`
+- `GET /api/courses`
+- `GET /api/courses/{id}`
+- `POST /api/enrollments`
+- `PUT /api/users/{id}` (For avatar uploads and profile updates)
+
+---
+
+### Phase 4: Frontend Integration
+We will point your existing frontend to the new backend.
+
+#### [MODIFY] `js/app.js`
+- Rewrite the `DB` object. Instead of reading from `localStorage`, it will use `fetch('http://127.0.0.1:8000/api/...')` to talk directly to your XAMPP server.
+- The rest of your HTML files will magically continue working exactly as before, but with real database persistence!
+
+> [!WARNING]
+> **Environment Note:** You will need to start your Laravel server by running `php artisan serve` in your terminal. I noticed that the `php` command is not currently recognized in your terminal's PATH. You will need to fix this (by adding `C:\xampp\php` to your Windows Environment Variables) before we can execute these migrations.
+
+## User Review Required
+Does this headless API approach sound good to you? It is the safest way to transition without having to rewrite all your HTML files into Laravel `.blade.php` files immediately. 
+If you approve, I will automatically generate all the Laravel Migration, Model, and Seeder files for you right now!
