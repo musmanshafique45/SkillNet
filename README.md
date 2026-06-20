@@ -11,19 +11,85 @@ E Learning Platform
 ## Overview
 Welcome to SkillNet, an e-learning platform designed to provide quality educational content and services.
 
+### Features
+
+**SkillNet** is a full-featured, web-based e-learning platform serving three user roles: **Students**, **Teachers**, and **Administrators**.
+
+#### 🎓 Student Features
+- Browse and search courses with advanced filtering and sorting
+- Enroll in courses and track learning progress
+- Watch video lectures with chapter navigation and bookmarks
+- Take interactive quizzes with multiple question types (MCQ, True/False, Short Answer)
+- View quiz results with score breakdowns and answer explanations
+- Maintain student profile with personal information and avatar upload
+- Earn and download certificates upon course completion
+- Access to student dashboard showing enrolled courses and completion status
+
+#### 👨‍🏫 Teacher Features
+- Create and publish courses with title, description, thumbnail, and category
+- Build comprehensive course modules with structured lectures
+- Upload and manage video content with progress tracking
+- Create interactive quizzes with multiple question types
+- Monitor student enrollment statistics and performance metrics
+- Track student progress and quiz performance
+- Course management: publish, draft, and archive controls
+- Reorder and organize course content efficiently
+
+#### 🛡️ Administrator Features
+- Comprehensive admin dashboard with platform analytics
+- View platform-wide statistics: total users, courses, enrollments, completions
+- User management system: search, filter, activate, or deactivate accounts
+- Course moderation: approve or reject submitted courses
+- Category and tag management for content organization
+- System settings configuration: platform name, logo, email settings
+- Full access to user management and platform control
+
+### Technical Specifications
+
+**Architecture:**
+- **Frontend**: HTML5, CSS3, JavaScript (responsive design with mobile-first approach)
+- **Backend**: Laravel 9 (PHP 8.0.2+)
+- **Database**: MySQL/MariaDB
+- **Authentication**: Laravel Sanctum (JWT-based authentication)
+- **Hosting**: Supports XAMPP, WAMP, or Laragon locally
+
+**Key Technical Components:**
+- RESTful API for seamless frontend-backend communication
+- Secure authentication with role-based access control (RBAC)
+- Interactive video player with progress tracking and chapter navigation
+- Auto-grading quiz engine supporting multiple question types
+- Role-based routing and middleware protection
+- Input sanitization and security best practices
+- Responsive design supporting desktop (1920px), tablet (768px), and mobile (375px) viewports
+
+**Technology Stack:**
+- **Language**: PHP 8.0.2+, HTML5, CSS3, JavaScript
+- **Framework**: Laravel 9
+- **Package Manager**: Composer
+- **Database**: MySQL/MariaDB
+- **API Authentication**: Laravel Sanctum
+- **Optional**: Node.js & npm for frontend asset compilation
+
+**Design System:**
+- Modern, clean, and professional interface
+- Consistent color palette and typography across the platform
+- Glassmorphism cards and gradient UI elements
+- Smooth animations and transitions
+- Reusable component library for consistency
+
 ---
 
 ## TERMS AND CONDITIONS
 
 **Last Updated:** June 19, 2026
 
-Welcome to SkillNet ("we," "our," or "us"). By accessing or using our website, services, and e-learning platform (collectively, the "Platform"), you agree to be bound by these Terms and Conditions.If you do not agree to these Terms, please do not use the Platform.
+Welcome to SkillNet ("we," "our," or "us"). By accessing or using our website, services, and e-learning platform (collectively, the "Platform"), you agree to be bound by these Terms and Conditions.
 
 ### 1. PLATFORM USE AND LICENSE
 We grant you a personal, non-exclusive, non-transferable, non-sublicensable, and revocable license to access and use the Platform strictly for your personal or internal business educational purposes.
 
 ### 2. INTELLECTUAL PROPERTY RESTRICTIONS (STRICT)
-The Platform, including its underlying source code, object code, software, architecture, algorithms, user interfaces, designs, graphics, text, and course materials, is the sole property of SkillNet an[...]
+The Platform, including its underlying source code, object code, software, architecture, algorithms, user interfaces, designs, graphics, text, and course materials, is the sole property of SkillNet and protected by international copyright and intellectual property laws.
 
 You are strictly prohibited from doing any of the following:
 - **No Code Modifications:** You shall not modify, adapt, alter, translate, or create derivative works of the Platform's code or content.
@@ -37,16 +103,16 @@ You are strictly prohibited from doing any of the following:
 - You may not share your account access with any third party.
 
 ### 4. TERMINATION OF ACCESS
-We reserve the right, without notice and at our sole discretion, to terminate or suspend your account and access to the Platform immediately if we suspect any breach of these Terms, including any unau[...]
+We reserve the right, without notice and at our sole discretion, to terminate or suspend your account and access to the Platform immediately if we suspect any breach of these Terms, including any unauthorized use, intellectual property violation, or security threat.
 
 ### 5. LIMITATION OF LIABILITY
-The Platform is provided on an "as-is" and "as-available" basis. To the maximum extent permitted by law, SkillNet shall not be liable for any indirect, incidental, special, or consequential damages ar[...]
+The Platform is provided on an "as-is" and "as-available" basis. To the maximum extent permitted by law, SkillNet shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of or inability to use the Platform.
 
 ### 6. GOVERNING LAW
 These Terms shall be governed by and construed in accordance with the applicable laws, without regard to its conflict of law principles.
 
 ### 7. CHANGES TO THESE TERMS
-We reserve the right to modify these Terms at any time. We will notify you of any changes by updating the "Last Updated" date at the top of this page. Your continued use of the Platform after changes [...]
+We reserve the right to modify these Terms at any time. We will notify you of any changes by updating the "Last Updated" date at the top of this page. Your continued use of the Platform after changes constitutes your acceptance of the modified Terms.
 
 ### 8. CONTACT INFORMATION
 If you have any questions about these Terms, please contact us at musmanshafique450@gmail.com.
