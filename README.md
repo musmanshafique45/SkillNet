@@ -3,8 +3,9 @@ E Learning Platform
 
 ## Table of Contents
 - [Overview](#overview)
-- [Terms and Conditions](#terms-and-conditions)
 - [Local Development Setup](#local-development-setup)
+- [Terms and Conditions](#terms-and-conditions)
+
 
 ---
 
