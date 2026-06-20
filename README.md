@@ -3,7 +3,7 @@ E Learning Platform
 
 ## Table of Contents
 - [Overview](#overview)
-- [Local Development Setup](#local-development-setup)
+- [Local Development Setup](#local-development-setup-guide)
 - [Terms and Conditions](#terms-and-conditions)
 
 
@@ -222,9 +222,7 @@ Welcome to SkillNet ("we," "our," or "us"). By accessing or using our website, s
 We grant you a personal, non-exclusive, non-transferable, non-sublicensable, and revocable license to access and use the Platform strictly for your personal or internal business educational purposes.
 
 ### 2. INTELLECTUAL PROPERTY RESTRICTIONS (STRICT)
-The Platform, including its underlying source code, object code, software, architecture, algorithms, user interfaces, designs, graphics, text, and course materials, is the sole property of SkillNet and protected by international copyright and intellectual property laws.
-
-You are strictly prohibited from doing any of the following:
+The Platform, including its underlying source code, object code, software, architecture, algorithms, user interfaces, designs, graphics, text, and course materials, is the sole property of SkillNet and its licensors. You are strictly prohibited from doing any of the following:
 - **No Code Modifications:** You shall not modify, adapt, alter, translate, or create derivative works of the Platform's code or content.
 - **No Reverse Engineering:** You shall not decompile, reverse engineer, disassemble, or otherwise attempt to derive or extract the source code of the Platform.
 - **No Commercial Resale:** You shall not sell, resell, lease, rent, loan, redistribute, sublicense, white-label, or commercially exploit the Platform or any of its features to any third party.
@@ -236,16 +234,16 @@ You are strictly prohibited from doing any of the following:
 - You may not share your account access with any third party.
 
 ### 4. TERMINATION OF ACCESS
-We reserve the right, without notice and at our sole discretion, to terminate or suspend your account and access to the Platform immediately if we suspect any breach of these Terms, including any unauthorized use, intellectual property violation, or security threat.
+We reserve the right, without notice and at our sole discretion, to terminate or suspend your account and access to the Platform immediately if we suspect any breach of these Terms, including any unauthorized access or use.
 
 ### 5. LIMITATION OF LIABILITY
-The Platform is provided on an "as-is" and "as-available" basis. To the maximum extent permitted by law, SkillNet shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of or inability to use the Platform.
+The Platform is provided on an "as-is" and "as-available" basis. To the maximum extent permitted by law, SkillNet shall not be liable for any indirect, incidental, special, or consequential damages arising out of or in connection with your use of the Platform.
 
 ### 6. GOVERNING LAW
 These Terms shall be governed by and construed in accordance with the applicable laws, without regard to its conflict of law principles.
 
 ### 7. CHANGES TO THESE TERMS
-We reserve the right to modify these Terms at any time. We will notify you of any changes by updating the "Last Updated" date at the top of this page. Your continued use of the Platform after changes constitutes your acceptance of the modified Terms.
+We reserve the right to modify these Terms at any time. We will notify you of any changes by updating the "Last Updated" date at the top of this page. Your continued use of the Platform after changes constitutes your acceptance of the updated Terms.
 
 ### 8. CONTACT INFORMATION
 If you have any questions about these Terms, please contact us at musmanshafique450@gmail.com.
