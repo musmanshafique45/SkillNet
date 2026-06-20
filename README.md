@@ -17,7 +17,7 @@ Welcome to SkillNet, an e-learning platform designed to provide quality educatio
 
 **Last Updated:** June 19, 2026
 
-Welcome to SkillNet ("we," "our," or "us"). By accessing or using our website, services, and e-learning platform (collectively, the "Platform"), you agree to be bound by these Terms and Conditions ("T[...]
+Welcome to SkillNet ("we," "our," or "us"). By accessing or using our website, services, and e-learning platform (collectively, the "Platform"), you agree to be bound by these Terms and Conditions.If you do not agree to these Terms, please do not use the Platform.
 
 ### 1. PLATFORM USE AND LICENSE
 We grant you a personal, non-exclusive, non-transferable, non-sublicensable, and revocable license to access and use the Platform strictly for your personal or internal business educational purposes.
