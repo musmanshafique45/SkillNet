@@ -1,11 +1,15 @@
 <?php
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6d4dc02ce3f47b7ee111da156a08237db462f4d2
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
 {
+<<<<<<< HEAD
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -41,4 +45,13 @@ class Course extends Model
     {
         return $this->hasMany(Quiz::class);
     }
+=======
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $guarded = [];
+
+    protected $casts = [
+        'tags' => 'array',
+    ];
+>>>>>>> 6d4dc02ce3f47b7ee111da156a08237db462f4d2
 }

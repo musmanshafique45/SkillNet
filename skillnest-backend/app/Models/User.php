@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +10,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+<<<<<<< HEAD
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -19,6 +19,16 @@ class User extends Authenticatable
     ];
 
     protected $hidden = ['password', 'remember_token'];
+=======
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $guarded = [];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+>>>>>>> 6d4dc02ce3f47b7ee111da156a08237db462f4d2
 
     protected $casts = [
         'email_verified_at' => 'datetime',
