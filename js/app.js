@@ -5,6 +5,35 @@
 
 const DB_KEY = 'skillnest_db';
 
+// =============================================
+// THEME TOGGLER & INITIALIZER
+// =============================================
+window.toggleTheme = function() {
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('light-theme', newTheme === 'light');
+  localStorage.setItem('theme', newTheme);
+  
+  // Update toggle icons
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.innerHTML = newTheme === 'light' ? '🌙' : '☀️';
+  });
+};
+
+function initTheme() {
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  document.body.classList.toggle('light-theme', currentTheme === 'light');
+  
+  // Ensure the button state matches current theme once DOM load is complete
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+      btn.innerHTML = currentTheme === 'light' ? '🌙' : '☀️';
+    });
+  });
+}
+
+initTheme();
+
 // ---- SEED DATA ----
 const SEED_DATA = {
   users: [
@@ -92,50 +121,158 @@ const SEED_DATA = {
 };
 
 // =============================================
+// API BRIDGE (LARAVEL <-> FRONTEND REST CONNECTION)
+// =============================================
+function apiRequest(method, url, data = null) {
+  const xhr = new XMLHttpRequest();
+  const session = JSON.parse(sessionStorage.getItem('skillnest_session') || '{}');
+  const token = session.token;
+  
+  let origin = window.location.origin;
+  if (origin === 'null' || window.location.protocol === 'file:') {
+    origin = 'http://localhost';
+  }
+  const root = origin + '/SkillNet/skillnest-backend/public/api';
+  xhr.open(method, root + url, false); // Synchronous requests to integrate cleanly with legacy code
+  
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Accept', 'application/json');
+  if (token) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+  }
+  
+  try {
+    xhr.send(data ? JSON.stringify(data) : null);
+    if (xhr.status >= 200 && xhr.status < 300) {
+      return JSON.parse(xhr.responseText || '{}');
+    } else {
+      const err = JSON.parse(xhr.responseText || '{}');
+      return { success: false, message: err.message || 'API request failed' };
+    }
+  } catch (e) {
+    console.error('API Connection Error:', e);
+    return { success: false, message: 'Network error or server unreachable' };
+  }
+}
+
+// =============================================
 // DATABASE LAYER
 // =============================================
 const DB = {
-  get() {
-    const raw = localStorage.getItem(DB_KEY);
-    return raw ? JSON.parse(raw) : null;
+  data: null,
+
+  init() {
+    if (!this.data) {
+      const res = apiRequest('GET', '/db/all');
+      if (res && !res.message) {
+        this.data = res;
+        console.log('✅ SkillNest DB loaded from MySQL (XAMPP).');
+      } else {
+        // Fallback to localStorage / SEED_DATA if server fails
+        const raw = localStorage.getItem(DB_KEY);
+        this.data = raw ? JSON.parse(raw) : SEED_DATA;
+        console.warn('⚠️ SkillNest DB loaded from fallback cache:', res ? res.message : 'No connection');
+      }
+    }
+    return this.data;
   },
   save(data) {
+    this.data = data;
     localStorage.setItem(DB_KEY, JSON.stringify(data));
   },
-  init() {
-    if (!this.get()) {
-      this.save(SEED_DATA);
-      console.log('✅ SkillNest DB seeded.');
-    }
-    return this.get();
-  },
   reset() {
-    localStorage.removeItem(DB_KEY);
+    // Re-seed DB by executing migrations trigger or clearing local values
+    this.data = null;
     this.init();
   },
   // Generic CRUD
-  getAll(table) { return this.get()[table] || []; },
-  getById(table, id) { return this.getAll(table).find(r => r.id === id) || null; },
+  getAll(table) { 
+    this.init();
+    return this.data[table] || []; 
+  },
+  getById(table, id) { 
+    return this.getAll(table).find(r => r.id === id) || null; 
+  },
   insert(table, record) {
-    const db = this.get();
-    db[table].push(record);
-    this.save(db);
+    this.init();
+    
+    let res = null;
+    if (table === 'enrollments') {
+      res = apiRequest('POST', '/enrollments', {
+        course_id: record.course_id
+      });
+    } else if (table === 'courses') {
+      res = apiRequest('POST', '/courses', record);
+    } else if (table === 'lectures') {
+      res = apiRequest('POST', '/lectures', record);
+    } else if (table === 'quizzes') {
+      res = apiRequest('POST', '/quizzes', record);
+    } else if (table === 'questions') {
+      res = apiRequest('POST', '/questions', record);
+    } else if (table === 'quiz_attempts') {
+      res = apiRequest('POST', '/quiz-attempts', record);
+    }
+    
+    if (res && res.success) {
+      const savedRecord = res.enrollment || res.course || res.lecture || res.quiz || res.question || res.attempt || record;
+      this.data[table].push(savedRecord);
+      this.save(this.data);
+      return savedRecord;
+    }
+    
+    // Local fallback
+    this.data[table].push(record);
+    this.save(this.data);
     return record;
   },
   update(table, id, updates) {
-    const db = this.get();
-    const idx = db[table].findIndex(r => r.id === id);
+    this.init();
+    const idx = this.data[table].findIndex(r => r.id === id);
     if (idx === -1) return null;
-    db[table][idx] = { ...db[table][idx], ...updates };
-    this.save(db);
-    return db[table][idx];
+    
+    let res = null;
+    if (table === 'users') {
+      if (updates.status !== undefined && Object.keys(updates).length === 1) {
+        res = apiRequest('PUT', '/users/' + id + '/status', { status: updates.status });
+      } else {
+        res = apiRequest('PUT', '/users/' + id, updates);
+      }
+    } else if (table === 'courses') {
+      if (updates.status !== undefined && Object.keys(updates).length === 1) {
+        res = apiRequest('PUT', '/courses/' + id + '/status', { status: updates.status });
+      } else {
+        res = apiRequest('PUT', '/courses/' + id, updates);
+      }
+    } else if (table === 'lectures') {
+      res = apiRequest('PUT', '/lectures/' + id, updates);
+    } else if (table === 'enrollments') {
+      res = apiRequest('PUT', '/enrollments/' + id, updates);
+    } else if (table === 'settings') {
+      res = apiRequest('PUT', '/settings', updates);
+    }
+    
+    this.data[table][idx] = { ...this.data[table][idx], ...updates };
+    this.save(this.data);
+    return this.data[table][idx];
   },
   delete(table, id) {
-    const db = this.get();
-    db[table] = db[table].filter(r => r.id !== id);
-    this.save(db);
+    this.init();
+    
+    let res = null;
+    if (table === 'courses') {
+      res = apiRequest('DELETE', '/courses/' + id);
+    } else if (table === 'lectures') {
+      res = apiRequest('DELETE', '/lectures/' + id);
+    } else if (table === 'questions') {
+      res = apiRequest('DELETE', '/questions/' + id);
+    }
+    
+    this.data[table] = this.data[table].filter(r => r.id !== id);
+    this.save(this.data);
   },
-  where(table, field, value) { return this.getAll(table).filter(r => r[field] === value); },
+  where(table, field, value) { 
+    return this.getAll(table).filter(r => r[field] === value); 
+  },
 };
 
 // =============================================
@@ -145,38 +282,44 @@ const Auth = {
   SESSION_KEY: 'skillnest_session',
 
   login(email, password) {
-    const users = DB.getAll('users');
-    const user = users.find(u => u.email === email.trim().toLowerCase() && u.password === password);
-    if (!user) return { success: false, message: 'Invalid email or password.' };
-    if (user.status === 'inactive') return { success: false, message: 'Account is deactivated. Contact support.' };
-    const session = { userId: user.id, role: user.role, name: user.name, email: user.email };
-    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-    return { success: true, user, session };
+    const res = apiRequest('POST', '/auth/login', { email: email.trim().toLowerCase(), password: password });
+    if (res && res.success) {
+      const session = { 
+        userId: res.session.userId, 
+        role: res.session.role, 
+        name: res.session.name, 
+        email: res.session.email,
+        token: res.token 
+      };
+      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+      return { success: true, user: res.user, session };
+    }
+    return { success: false, message: res.message || 'Invalid email or password.' };
   },
 
   register(data) {
-    const users = DB.getAll('users');
-    if (users.find(u => u.email === data.email.toLowerCase())) {
-      return { success: false, message: 'Email already registered.' };
-    }
-    const newUser = {
-      id: 'u' + Date.now(),
+    const res = apiRequest('POST', '/auth/register', {
       name: data.name,
-      email: data.email.toLowerCase(),
+      email: data.email.trim().toLowerCase(),
       password: data.password,
-      role: data.role || 'student',
-      avatar: '', bio: '',
-      created_at: new Date().toISOString().split('T')[0],
-      status: 'active',
-      enrolled: [],
-    };
-    DB.insert('users', newUser);
-    const session = { userId: newUser.id, role: newUser.role, name: newUser.name, email: newUser.email };
-    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-    return { success: true, user: newUser, session };
+      role: data.role || 'student'
+    });
+    if (res && res.success) {
+      const session = { 
+        userId: res.session.userId, 
+        role: res.session.role, 
+        name: res.session.name, 
+        email: res.session.email,
+        token: res.token 
+      };
+      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+      return { success: true, user: res.user, session };
+    }
+    return { success: false, message: res.message || 'Registration failed.' };
   },
 
   logout() {
+    apiRequest('POST', '/auth/logout');
     sessionStorage.removeItem(this.SESSION_KEY);
     window.location.href = rootPath() + 'index.html';
   },
@@ -323,6 +466,7 @@ function renderPublicNav(activePage = '') {
         <li><a href="${root}courses.html?cat=Data+Science" class="">Data Science</a></li>
       </ul>
       <div class="nav-actions">
+        <button class="theme-toggle-btn btn btn-ghost btn-sm" onclick="toggleTheme()" style="padding: 0 10px; font-size: 1.1rem; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; margin-right: 8px;">☀️</button>
         ${session ? `
           <a href="${root}${session.role}/dashboard.html" class="btn btn-outline btn-sm">Dashboard</a>
           <div class="nav-avatar-wrapper" onclick="toggleDropdown(event, '.avatar-dropdown')" style="position:relative;cursor:pointer">
@@ -500,6 +644,7 @@ function renderTopbar(title) {
       <span class="topbar-title">${title}</span>
     </div>
     <div class="topbar-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme" style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition-fast); margin-right: 8px;">☀️</button>
       <div class="notif-wrapper" onclick="toggleDropdown(event, '.notif-dropdown')" style="position:relative;cursor:pointer;display:flex;align-items:center;">
         <div class="notif-btn" title="Notifications">
           🔔 <span class="notif-dot" style="${notifCount > 0 ? 'display:block' : 'display:none'}"></span>

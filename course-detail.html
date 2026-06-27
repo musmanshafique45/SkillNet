@@ -18,7 +18,7 @@
 .meta-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:20px}
 .meta-item{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-secondary)}
 .instructor-card{display:flex;align-items:center;gap:16px;padding:20px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);margin-bottom:24px}
-.instructor-avatar-lg{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#A855F7);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;flex-shrink:0}
+.instructor-avatar-lg{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;flex-shrink:0}
 .what-you-learn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .learn-item{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;color:var(--text-secondary)}
 .learn-item span:first-child{color:var(--accent);font-size:.9rem;flex-shrink:0;margin-top:2px}
@@ -239,7 +239,7 @@
       ${reviewData.map(r=>`
       <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#A855F7);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">${r.name.substring(0,2)}</div>
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">${r.name.substring(0,2)}</div>
           <div><div style="font-weight:600;font-size:.9rem">${r.name}</div><div style="color:var(--amber);font-size:.85rem">${'★'.repeat(r.rating)}</div></div>
           <div style="margin-left:auto;font-size:.78rem;color:var(--text-muted)">${r.date}</div>
         </div>
